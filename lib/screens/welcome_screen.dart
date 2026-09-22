@@ -1,4 +1,5 @@
 import 'package:chatapp/screens/getstarted_screen.dart';
+import 'package:chatapp/screens/signup_screen.dart';
 import 'package:flutter/material.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -126,7 +127,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       height: buttonHeight,
 
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SignupScreen(),
+                            ),
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           elevation: 3,
                           backgroundColor: Colors.white,
