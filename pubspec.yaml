@@ -55,6 +55,8 @@ flutter:
 
    assets:
        - utils/AI BOT.png
+       - utils/Google Icon.png
+       - utils/GitHub Icon.png
 
  
 
