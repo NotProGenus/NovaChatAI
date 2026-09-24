@@ -8,6 +8,7 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  bool showEmailError = false;
   final fullNameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -184,6 +185,22 @@ class _SignupScreenState extends State<SignupScreen> {
 
                     SizedBox(height: height * 0.018),
 
+                    SizedBox(
+                      width: double.infinity,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: Colors.red),
+                          SizedBox(width: width * 0.02),
+                          const Text(
+                            "Please enter a valid email",
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    if (showEmailError) SizedBox(height: height * 0.018),
+
                     _buildTextField(
                       mycontroller: emailController,
                       myhint: "Email",
@@ -247,27 +264,21 @@ class _SignupScreenState extends State<SignupScreen> {
                       height: buttonHeight,
                       child: ElevatedButton(
                         onPressed: () {
-                          final email = emailController.text;
+                          final email = emailController.text.trim();
 
-                          if (email.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Please enter your email"),
-                              ),
-                            );
-                          } else if (!email.contains("@") ||
-                              !email.contains(".")) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Please enter a valid email"),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Valid email")),
-                            );
+                          setState(() {
+                            if (email.isEmpty ||
+                                !email.contains("@") ||
+                                !email.contains(".")) {
+                              showEmailError = true;
+                            } else {
+                              showEmailError = false;
+                            }
+                          });
+
+                          if (!showEmailError) {
+                            // TODO: Implement sign up logic
                           }
-                          // TODO: Implement sign up logic
                         },
                         style: ElevatedButton.styleFrom(
                           elevation: 3,
