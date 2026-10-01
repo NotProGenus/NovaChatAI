@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:chatapp/screens/getstarted_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -277,7 +278,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           });
 
                           if (!showEmailError) {
-                            // TODO: Implement sign up logic
+                            // TODO: Implement Log In logic
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -373,7 +374,12 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => GetstartedScreen(),
+                              ),
+                            );
                           },
                           child: Text(
                             "Sign In",
