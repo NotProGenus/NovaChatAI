@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:chatapp/screens/signup_screen.dart';
-
 class GetstartedScreen extends StatefulWidget {
   const GetstartedScreen({super.key});
 
