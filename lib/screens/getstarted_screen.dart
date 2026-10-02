@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:chatapp/screens/signup_screen.dart';
+import 'package:chatapp/screens/home_screen.dart';
+import 'package:chatapp/main.dart';
 
 class GetstartedScreen extends StatefulWidget {
   const GetstartedScreen({super.key});
@@ -252,7 +253,16 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                           });
 
                           if (!showEmailPassError) {
-                            // TODO: Implement sign up logic
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => HomeScreen(
+                                  userName: emailController.text.split('@').first,
+                                  themeNotifier: themeNotifier,
+                                ),
+                              ),
+                              (route) => false,
+                            );
                           }
                         },
                         style: ElevatedButton.styleFrom(
