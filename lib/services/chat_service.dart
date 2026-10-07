@@ -10,7 +10,7 @@ class ChatService {
 
   // Create a new chat session
   ChatSession createNewChat() {
-    final session = ChatSession(
+    ChatSession session = ChatSession(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: 'New Chat',
     );
@@ -44,7 +44,7 @@ class ChatService {
       createNewChat();
     }
 
-    final userMessage = ChatMessage(text: text, isUser: true);
+    ChatMessage userMessage = ChatMessage(text: text, isUser: true);
     _currentSession!.messages.add(userMessage);
     _currentSession!.lastMessageAt = DateTime.now();
 

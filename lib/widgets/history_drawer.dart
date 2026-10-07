@@ -11,7 +11,7 @@ class HistoryDrawer extends StatelessWidget {
   final void Function(String sessionId, String newTitle) onRenameSession;
   final VoidCallback onLogout;
   final bool isDarkMode;
-  final ValueChanged<bool> onDarkModeToggle;
+  final void Function(bool value) onDarkModeToggle;
   final String? currentSessionId;
 
   const HistoryDrawer({

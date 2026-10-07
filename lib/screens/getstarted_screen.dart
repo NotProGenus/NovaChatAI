@@ -1,3 +1,4 @@
+import 'package:chatapp/screens/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:chatapp/screens/home_screen.dart';
 import 'package:chatapp/main.dart';
@@ -260,7 +261,7 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                                   userName: emailController.text
                                       .split('@')
                                       .first,
-                                  themeNotifier: themeNotifier,
+                                  mythemeNotifier: themeNotifier,
                                 ),
                               ),
                               (route) => false,
@@ -360,7 +361,12 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.pop(context);
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SignupScreen(),
+                              ),
+                            );
                           },
                           child: Text(
                             "Sign In",

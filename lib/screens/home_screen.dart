@@ -11,12 +11,12 @@ import 'welcome_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userName;
-  final ThemeNotifier themeNotifier;
+  final ThemeNotifier mythemeNotifier;
 
   const HomeScreen({
     super.key,
     required this.userName,
-    required this.themeNotifier,
+    required this.mythemeNotifier,
   });
 
   @override
@@ -112,56 +112,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor:
-          isDark ? AppColors.darkBackground : AppColors.lightBackground,
-      appBar: _buildAppBar(isDark),
-      drawer: HistoryDrawer(
-        chatService: _chatService,
-        currentSessionId: _chatService.currentSession?.id,
-        onNewChat: _startNewChat,
-        onSessionTap: _switchToSession,
-        onDeleteSession: _deleteSession,
-        onRenameSession: _renameSession,
-        onLogout: _logout,
-        isDarkMode: widget.themeNotifier.isDarkMode,
-        onDarkModeToggle: (value) {
-          widget.themeNotifier.setDarkMode(value);
-        },
-      ),
-      body: Column(
-        children: [
-          // Chat messages or welcome view
-          Expanded(
-            child: _hasMessages ? _buildChatView() : _buildWelcomeView(isDark),
-          ),
-          // Chat input
-          ChatInput(
-            controller: _messageController,
-            onSend: () => _sendMessage(_messageController.text),
-            onMicTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Voice input coming soon!'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
   PreferredSizeWidget _buildAppBar(bool isDark) {
     return AppBar(
-      backgroundColor:
-          isDark ? AppColors.darkSurface : AppColors.lightSurface,
+      backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
       elevation: 0.5,
       leading: IconButton(
         icon: Icon(
@@ -209,7 +162,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         padding: const EdgeInsets.symmetric(vertical: 40),
         child: Column(
           children: [
-            const SizedBox(height: 20),
             // Greeting
             Text(
               'Hello!',
@@ -231,11 +183,56 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
             const SizedBox(height: 36),
             // Suggestion cards
-            SuggestionGrid(
-              onSuggestionTap: (message) => _sendMessage(message),
-            ),
+            SuggestionGrid(onSuggestionTap: (message) => _sendMessage(message)),
           ],
         ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: isDark
+          ? AppColors.darkBackground
+          : AppColors.lightBackground,
+      appBar: _buildAppBar(isDark),
+      drawer: HistoryDrawer(
+        chatService: _chatService,
+        currentSessionId: _chatService.currentSession?.id,
+        onNewChat: _startNewChat,
+        onSessionTap: _switchToSession,
+        onDeleteSession: _deleteSession,
+        onRenameSession: _renameSession,
+        onLogout: _logout,
+        isDarkMode: widget.mythemeNotifier.isDarkMode,
+        onDarkModeToggle: (value) {
+          widget.mythemeNotifier.setDarkMode(value);
+        },
+      ),
+      body: Column(
+        children: [
+          // Chat messages or welcome view
+          Expanded(
+            child: _hasMessages ? _buildChatView() : _buildWelcomeView(isDark),
+          ),
+          // Chat input
+          ChatInput(
+            controller: _messageController,
+            onSend: () => _sendMessage(_messageController.text),
+            onMicTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Voice input coming soon!'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -255,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTypingIndicator() {
+ Widget _buildTypingIndicator() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -321,9 +318,10 @@ class _BouncingDotState extends State<_BouncingDot>
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    _animation = Tween<double>(begin: 0, end: -6).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: 0,
+      end: -6,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
     Future.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) {
         _controller.repeat(reverse: true);

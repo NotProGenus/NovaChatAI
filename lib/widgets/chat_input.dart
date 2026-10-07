@@ -13,22 +13,19 @@ class ChatInput extends StatelessWidget {
     this.onMicTap,
   });
 
+  void _handleSend() {
+    if (controller.text.trim().isNotEmpty) {
+      onSend();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
+
       child: SafeArea(
         top: false,
         child: Row(
@@ -64,7 +61,9 @@ class ChatInput extends StatelessWidget {
                           ),
                         ),
                         style: TextStyle(
-                          color: isDark ? AppColors.darkText : AppColors.lightText,
+                          color: isDark
+                              ? AppColors.darkText
+                              : AppColors.lightText,
                           fontSize: 15,
                         ),
                         onSubmitted: (_) => _handleSend(),
@@ -110,11 +109,5 @@ class ChatInput extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  void _handleSend() {
-    if (controller.text.trim().isNotEmpty) {
-      onSend();
-    }
   }
 }

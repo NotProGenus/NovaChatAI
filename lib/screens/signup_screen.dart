@@ -287,7 +287,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                   userName: fullNameController.text.isNotEmpty
                                       ? fullNameController.text
                                       : emailController.text.split('@').first,
-                                  themeNotifier: themeNotifier,
+                                  mythemeNotifier: themeNotifier,
                                 ),
                               ),
                               (route) => false,
@@ -387,15 +387,15 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
+                            Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => GetstartedScreen(),
+                                builder: (context) => const GetstartedScreen(),
                               ),
                             );
                           },
                           child: Text(
-                            "Sign In",
+                            "Log In",
                             style: TextStyle(
                               fontSize: bottomTextSize,
                               color: Colors.blue,
