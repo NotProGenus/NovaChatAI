@@ -2,6 +2,7 @@ import 'package:chatapp/screens/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:chatapp/screens/home_screen.dart';
 import 'package:chatapp/main.dart';
+import '../utils/responsive.dart';
 
 class GetstartedScreen extends StatefulWidget {
   const GetstartedScreen({super.key});
@@ -28,6 +29,7 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
     required String myhint,
     required IconData myprefixIcon,
     required double myfontSize,
+    required Responsive r,
     bool myobscureText = false,
     TextInputType keyboardType = TextInputType.text,
     Widget? mysuffixIcon,
@@ -40,24 +42,21 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
       decoration: InputDecoration(
         hintText: myhint,
         hintStyle: TextStyle(color: Colors.black, fontSize: myfontSize),
-        prefixIcon: Icon(myprefixIcon, color: Colors.grey[500], size: 20),
+        prefixIcon: Icon(myprefixIcon, color: Colors.grey[500], size: r.icon(20)),
         suffixIcon: mysuffixIcon,
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 16,
-          horizontal: 16,
-        ),
+        contentPadding: r.symmetricPadding(vertical: 16, horizontal: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(r.r(12)),
           borderSide: BorderSide(color: Colors.grey[300]!),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(r.r(12)),
           borderSide: BorderSide(color: Colors.grey[300]!),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(r.r(12)),
           borderSide: const BorderSide(color: Colors.blue, width: 1.5),
         ),
       ),
@@ -71,6 +70,7 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
     required double fontSize,
     required Widget icon,
     required VoidCallback onPressed,
+    required Responsive r,
   }) {
     return SizedBox(
       width: width,
@@ -90,7 +90,7 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
           backgroundColor: Colors.white,
           side: BorderSide(color: Colors.grey[300]!),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(r.r(30)),
           ),
         ),
       ),
@@ -99,6 +99,8 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+
     return Scaffold(
       backgroundColor: Colors.grey[200],
       extendBodyBehindAppBar: true,
@@ -107,7 +109,11 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87),
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: Colors.black87,
+            size: r.icon(20),
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -117,276 +123,286 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
               colors: [Colors.cyan, Colors.deepPurple, Colors.pinkAccent],
             ).createShader(bounds);
           },
-          child: const Text(
+          child: Text(
             "NovaChat",
             style: TextStyle(
               color: Colors.white,
-              fontSize: 22,
+              fontSize: r.sp(22),
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth;
-          final height = constraints.maxHeight;
+      body: SafeArea(
+        top: false,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final titleSize = r.sp(28);
+            final subtitleSize = r.sp(14);
+            final fieldTextSize = r.sp(15);
+            final buttonWidth = r.w(320);
+            final buttonHeight = r.h(50);
+            final buttonTextSize = r.sp(16);
+            final socialButtonHeight = r.h(48);
+            final orTextSize = r.sp(14);
+            final bottomTextSize = r.sp(14);
+            final socialIconSize = r.w(24);
 
-          final titleSize = (width * 0.07).clamp(24.0, 32.0);
-          final subtitleSize = (width * 0.035).clamp(13.0, 16.0);
-          final fieldTextSize = (width * 0.038).clamp(14.0, 16.0);
-          final buttonWidth = (width * 0.85).clamp(280.0, 400.0);
-          final buttonHeight = (height * 0.058).clamp(46.0, 54.0);
-          final buttonTextSize = (width * 0.042).clamp(15.0, 18.0);
-          final socialButtonHeight = (height * 0.054).clamp(44.0, 50.0);
-          final orTextSize = (width * 0.035).clamp(13.0, 15.0);
-          final bottomTextSize = (width * 0.035).clamp(13.0, 15.0);
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Padding(
+                  padding: r.symmetricPadding(horizontal: 30),
+                  child: Column(
+                    children: [
+                      SizedBox(height: r.h(110)),
 
-          return SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: width * 0.08),
-                child: Column(
-                  children: [
-                    SizedBox(height: height * 0.13),
-
-                    Text(
-                      "Welcome Back",
-                      style: TextStyle(
-                        fontSize: titleSize,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-
-                    SizedBox(height: height * 0.008),
-
-                    Text(
-                      "Log in to continue",
-                      style: TextStyle(
-                        fontSize: subtitleSize,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-
-                    SizedBox(height: height * 0.04),
-
-                    SizedBox(
-                      width: double.infinity,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.error_outline, color: Colors.red),
-                          SizedBox(width: width * 0.02),
-                          const Text(
-                            "Please enter a valid email or Password",
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    if (showEmailPassError) SizedBox(height: height * 0.018),
-
-                    _buildTextField(
-                      mycontroller: emailController,
-                      myhint: "Email",
-                      myprefixIcon: Icons.email_outlined,
-                      keyboardType: TextInputType.emailAddress,
-                      myfontSize: fieldTextSize,
-                    ),
-
-                    SizedBox(height: height * 0.018),
-
-                    _buildTextField(
-                      mycontroller: passwordController,
-                      myhint: "Password",
-                      myprefixIcon: Icons.lock_outline,
-                      myobscureText: _obscurePassword,
-                      myfontSize: fieldTextSize,
-                      mysuffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: Colors.grey[500],
-                          size: 20,
+                      Text(
+                        "Welcome Back",
+                        style: TextStyle(
+                          fontSize: titleSize,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
                       ),
-                    ),
 
-                    SizedBox(
-                      width: double.infinity,
-                      child: Row(
-                        children: [
-                          SizedBox(width: width * 0.52),
-                          const Text(
-                            "Forgot Password?",
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ],
+                      SizedBox(height: r.h(6)),
+
+                      Text(
+                        "Log in to continue",
+                        style: TextStyle(
+                          fontSize: subtitleSize,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
 
-                    SizedBox(height: height * 0.0275),
+                      SizedBox(height: r.h(30)),
 
-                    SizedBox(
-                      width: buttonWidth,
-                      height: buttonHeight,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          final email = emailController.text.trim();
-
-                          setState(() {
-                            if (email.isEmpty ||
-                                !email.contains("@") ||
-                                !email.contains(".")) {
-                              showEmailPassError = true;
-                            } else {
-                              showEmailPassError = false;
-                            }
-                          });
-
-                          if (!showEmailPassError) {
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => HomeScreen(
-                                  userName: emailController.text
-                                      .split('@')
-                                      .first,
-                                  mythemeNotifier: themeNotifier,
+                      // Error message - only show when needed
+                      if (showEmailPassError) ...[
+                        Row(
+                          children: [
+                            Icon(Icons.error_outline, color: Colors.red, size: r.icon(20)),
+                            SizedBox(width: r.w(8)),
+                            Expanded(
+                              child: Text(
+                                "Please enter a valid email or Password",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: r.sp(13),
                                 ),
                               ),
-                              (route) => false,
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          elevation: 3,
-                          backgroundColor: Colors.blue,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: Text(
-                          "Log In",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: buttonTextSize,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: height * 0.025),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Divider(color: Colors.grey[400], thickness: 1),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: width * 0.04,
-                          ),
-                          child: Text(
-                            "OR",
-                            style: TextStyle(
-                              fontSize: orTextSize,
-                              color: Colors.grey[500],
-                              fontWeight: FontWeight.w500,
                             ),
-                          ),
+                          ],
                         ),
-                        Expanded(
-                          child: Divider(color: Colors.grey[400], thickness: 1),
-                        ),
+                        SizedBox(height: r.h(12)),
                       ],
-                    ),
 
-                    SizedBox(height: height * 0.025),
-
-                    _buildSocialButton(
-                      width: buttonWidth,
-                      height: socialButtonHeight,
-                      label: "Continue with Google",
-                      fontSize: fieldTextSize,
-                      icon: Image.asset(
-                        "utils/Google Icon.png",
-                        width: 24,
-                        height: 24,
-                      ),
-                      onPressed: () {
-                        // TODO: Implement Google sign up
-                      },
-                    ),
-
-                    SizedBox(height: height * 0.015),
-
-                    _buildSocialButton(
-                      width: buttonWidth,
-                      height: socialButtonHeight,
-                      label: "Continue with GitHub",
-                      fontSize: fieldTextSize,
-                      icon: Image.asset(
-                        "utils/GitHub Icon.png",
-                        width: 24,
-                        height: 24,
+                      _buildTextField(
+                        mycontroller: emailController,
+                        myhint: "Email",
+                        myprefixIcon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                        myfontSize: fieldTextSize,
+                        r: r,
                       ),
 
-                      onPressed: () {
-                        // TODO: Implement GitHub sign up
-                      },
-                    ),
+                      SizedBox(height: r.h(14)),
 
-                    SizedBox(height: height * 0.04),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Do not have an Account? ",
-                          style: TextStyle(
-                            fontSize: bottomTextSize,
-                            color: Colors.grey[600],
+                      _buildTextField(
+                        mycontroller: passwordController,
+                        myhint: "Password",
+                        myprefixIcon: Icons.lock_outline,
+                        myobscureText: _obscurePassword,
+                        myfontSize: fieldTextSize,
+                        r: r,
+                        mysuffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            color: Colors.grey[500],
+                            size: r.icon(20),
                           ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SignupScreen(),
-                              ),
-                            );
+                      ),
+
+                      // Forgot Password - properly right-aligned
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            // TODO: Implement forgot password
                           },
                           child: Text(
-                            "Sign In",
+                            "Forgot Password?",
                             style: TextStyle(
-                              fontSize: bottomTextSize,
-                              color: Colors.blue,
-                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                              fontSize: r.sp(13),
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
 
-                    SizedBox(height: height * 0.03),
-                  ],
+                      SizedBox(height: r.h(16)),
+
+                      SizedBox(
+                        width: buttonWidth,
+                        height: buttonHeight,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            final email = emailController.text.trim();
+
+                            setState(() {
+                              if (email.isEmpty ||
+                                  !email.contains("@") ||
+                                  !email.contains(".")) {
+                                showEmailPassError = true;
+                              } else {
+                                showEmailPassError = false;
+                              }
+                            });
+
+                            if (!showEmailPassError) {
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => HomeScreen(
+                                    userName: emailController.text
+                                        .split('@')
+                                        .first,
+                                    mythemeNotifier: themeNotifier,
+                                  ),
+                                ),
+                                (route) => false,
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            elevation: 3,
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(r.r(30)),
+                            ),
+                          ),
+                          child: Text(
+                            "Log In",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: buttonTextSize,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: r.h(20)),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Divider(color: Colors.grey[400], thickness: 1),
+                          ),
+                          Padding(
+                            padding: r.symmetricPadding(horizontal: 16),
+                            child: Text(
+                              "OR",
+                              style: TextStyle(
+                                fontSize: orTextSize,
+                                color: Colors.grey[500],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Divider(color: Colors.grey[400], thickness: 1),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: r.h(20)),
+
+                      _buildSocialButton(
+                        width: buttonWidth,
+                        height: socialButtonHeight,
+                        label: "Continue with Google",
+                        fontSize: fieldTextSize,
+                        r: r,
+                        icon: Image.asset(
+                          "utils/Google Icon.png",
+                          width: socialIconSize,
+                          height: socialIconSize,
+                        ),
+                        onPressed: () {
+                          // TODO: Implement Google sign up
+                        },
+                      ),
+
+                      SizedBox(height: r.h(12)),
+
+                      _buildSocialButton(
+                        width: buttonWidth,
+                        height: socialButtonHeight,
+                        label: "Continue with GitHub",
+                        fontSize: fieldTextSize,
+                        r: r,
+                        icon: Image.asset(
+                          "utils/GitHub Icon.png",
+                          width: socialIconSize,
+                          height: socialIconSize,
+                        ),
+                        onPressed: () {
+                          // TODO: Implement GitHub sign up
+                        },
+                      ),
+
+                      SizedBox(height: r.h(30)),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Do not have an Account? ",
+                            style: TextStyle(
+                              fontSize: bottomTextSize,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SignupScreen(),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              "Sign In",
+                              style: TextStyle(
+                                fontSize: bottomTextSize,
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: r.h(24)),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/chat_model.dart';
 import '../services/chat_service.dart';
 import '../utils/constants.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/chat_input.dart';
@@ -112,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(bool isDark) {
+  PreferredSizeWidget _buildAppBar(bool isDark, Responsive r) {
     return AppBar(
       backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
       elevation: 0.5,
@@ -120,6 +121,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         icon: Icon(
           Icons.menu,
           color: isDark ? AppColors.darkText : AppColors.lightText,
+          size: r.icon(24),
         ),
         onPressed: () => _scaffoldKey.currentState?.openDrawer(),
       ),
@@ -128,11 +130,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         shaderCallback: (bounds) {
           return AppGradients.novaChatGradient.createShader(bounds);
         },
-        child: const Text(
+        child: Text(
           'NovaChat',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 22,
+            fontSize: r.sp(22),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -142,6 +144,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           icon: Icon(
             Icons.settings_outlined,
             color: isDark ? AppColors.darkText : AppColors.lightText,
+            size: r.icon(24),
           ),
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -156,32 +159,32 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildWelcomeView(bool isDark) {
+  Widget _buildWelcomeView(bool isDark, Responsive r) {
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 40),
+        padding: r.symmetricPadding(vertical: 40),
         child: Column(
           children: [
             // Greeting
             Text(
               'Hello!',
               style: TextStyle(
-                fontSize: 32,
+                fontSize: r.sp(32),
                 fontWeight: FontWeight.bold,
                 color: isDark ? AppColors.darkText : AppColors.lightText,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: r.h(8)),
             Text(
               'How can I help you today?',
               style: TextStyle(
-                fontSize: 17,
+                fontSize: r.sp(17),
                 color: isDark
                     ? AppColors.darkTextSecondary
                     : AppColors.lightTextSecondary,
               ),
             ),
-            const SizedBox(height: 36),
+            SizedBox(height: r.h(36)),
             // Suggestion cards
             SuggestionGrid(onSuggestionTap: (message) => _sendMessage(message)),
           ],
@@ -193,13 +196,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final r = Responsive.of(context);
 
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: isDark
           ? AppColors.darkBackground
           : AppColors.lightBackground,
-      appBar: _buildAppBar(isDark),
+      appBar: _buildAppBar(isDark, r),
       drawer: HistoryDrawer(
         chatService: _chatService,
         currentSessionId: _chatService.currentSession?.id,
@@ -217,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         children: [
           // Chat messages or welcome view
           Expanded(
-            child: _hasMessages ? _buildChatView() : _buildWelcomeView(isDark),
+            child: _hasMessages ? _buildChatView(r) : _buildWelcomeView(isDark, r),
           ),
           // Chat input
           ChatInput(
@@ -237,57 +241,57 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildChatView() {
+  Widget _buildChatView(Responsive r) {
     return ListView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.only(top: 16, bottom: 8),
+      padding: EdgeInsets.only(top: r.h(16), bottom: r.h(8)),
       itemCount: _currentMessages.length + (_isTyping ? 1 : 0),
       itemBuilder: (context, index) {
         if (index < _currentMessages.length) {
           return ChatBubble(message: _currentMessages[index]);
         }
         // Typing indicator
-        return _buildTypingIndicator();
+        return _buildTypingIndicator(r);
       },
     );
   }
 
- Widget _buildTypingIndicator() {
+ Widget _buildTypingIndicator(Responsive r) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: r.symmetricPadding(horizontal: 16, vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
-            radius: 16,
+            radius: r.w(16),
             backgroundColor: isDark
                 ? AppColors.suggestionIconBgDark
                 : AppColors.suggestionIconBg,
-            child: const Icon(
+            child: Icon(
               Icons.smart_toy_outlined,
-              size: 18,
+              size: r.icon(18),
               color: AppColors.primaryBlue,
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: r.w(8)),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: r.symmetricPadding(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: isDark ? AppColors.darkCard : AppColors.aiBubbleLight,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(18),
-                topRight: Radius.circular(18),
-                bottomLeft: Radius.circular(4),
-                bottomRight: Radius.circular(18),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(r.r(18)),
+                topRight: Radius.circular(r.r(18)),
+                bottomLeft: Radius.circular(r.r(4)),
+                bottomRight: Radius.circular(r.r(18)),
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: List.generate(3, (i) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 3),
-                  child: _BouncingDot(delay: i * 200),
+                  padding: r.symmetricPadding(horizontal: 3),
+                  child: _BouncingDot(delay: i * 200, dotSize: r.w(8)),
                 );
               }),
             ),
@@ -300,7 +304,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
 class _BouncingDot extends StatefulWidget {
   final int delay;
-  const _BouncingDot({required this.delay});
+  final double dotSize;
+  const _BouncingDot({required this.delay, this.dotSize = 8});
 
   @override
   State<_BouncingDot> createState() => _BouncingDotState();
@@ -343,8 +348,8 @@ class _BouncingDotState extends State<_BouncingDot>
         return Transform.translate(
           offset: Offset(0, _animation.value),
           child: Container(
-            width: 8,
-            height: 8,
+            width: widget.dotSize,
+            height: widget.dotSize,
             decoration: BoxDecoration(
               color: AppColors.primaryBlue.withValues(alpha: 0.6),
               shape: BoxShape.circle,

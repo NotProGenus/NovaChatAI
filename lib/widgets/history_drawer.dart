@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/chat_model.dart';
 import '../services/chat_service.dart';
 import '../utils/constants.dart';
+import '../utils/responsive.dart';
 
 class HistoryDrawer extends StatelessWidget {
   final ChatService chatService;
@@ -31,15 +32,17 @@ class HistoryDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final sessions = chatService.sessions;
+    final r = Responsive.of(context);
 
     return Drawer(
       backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+      width: r.w(300),
       child: SafeArea(
         child: Column(
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
+              padding: r.padding(left: 20, top: 16, right: 8, bottom: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -47,11 +50,11 @@ class HistoryDrawer extends StatelessWidget {
                     shaderCallback: (bounds) {
                       return AppGradients.novaChatGradient.createShader(bounds);
                     },
-                    child: const Text(
+                    child: Text(
                       'NovaChat',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 24,
+                        fontSize: r.sp(24),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -60,6 +63,7 @@ class HistoryDrawer extends StatelessWidget {
                     icon: Icon(
                       Icons.close,
                       color: isDark ? AppColors.darkText : AppColors.lightText,
+                      size: r.icon(24),
                     ),
                     onPressed: () => Navigator.pop(context),
                   ),
@@ -69,42 +73,45 @@ class HistoryDrawer extends StatelessWidget {
 
             // New Chat button
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: r.symmetricPadding(horizontal: 16, vertical: 8),
               child: SizedBox(
                 width: double.infinity,
-                height: 44,
+                height: r.h(44),
                 child: OutlinedButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
                     onNewChat();
                   },
-                  icon: const Icon(Icons.add, size: 20),
-                  label: const Text(
+                  icon: Icon(Icons.add, size: r.icon(20)),
+                  label: Text(
                     'New Chat',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: r.sp(15),
+                    ),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primaryBlue,
                     side: const BorderSide(color: AppColors.primaryBlue),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(r.r(12)),
                     ),
                   ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 8),
+            SizedBox(height: r.h(8)),
 
             // Previous Chats header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              padding: r.symmetricPadding(horizontal: 20, vertical: 4),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Previous Chats',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: r.sp(13),
                     fontWeight: FontWeight.w600,
                     color: isDark
                         ? AppColors.darkTextSecondary
@@ -123,15 +130,16 @@ class HistoryDrawer extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.chat_bubble_outline,
-                            size: 48,
+                            size: r.icon(48),
                             color: isDark
                                 ? AppColors.darkTextSecondary
                                 : AppColors.lightTextSecondary,
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: r.h(12)),
                           Text(
                             'No chats yet',
                             style: TextStyle(
+                              fontSize: r.sp(14),
                               color: isDark
                                   ? AppColors.darkTextSecondary
                                   : AppColors.lightTextSecondary,
@@ -141,7 +149,7 @@ class HistoryDrawer extends StatelessWidget {
                       ),
                     )
                   : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      padding: r.symmetricPadding(horizontal: 8),
                       itemCount: sessions.length,
                       itemBuilder: (context, index) {
                         final session = sessions[index];
@@ -172,12 +180,13 @@ class HistoryDrawer extends StatelessWidget {
               leading: Icon(
                 Icons.settings_outlined,
                 color: isDark ? AppColors.darkText : AppColors.lightText,
+                size: r.icon(22),
               ),
               title: Text(
                 'Settings',
                 style: TextStyle(
                   color: isDark ? AppColors.darkText : AppColors.lightText,
-                  fontSize: 15,
+                  fontSize: r.sp(15),
                 ),
               ),
               dense: true,
@@ -197,12 +206,13 @@ class HistoryDrawer extends StatelessWidget {
               leading: Icon(
                 Icons.dark_mode_outlined,
                 color: isDark ? AppColors.darkText : AppColors.lightText,
+                size: r.icon(22),
               ),
               title: Text(
                 'Dark Mode',
                 style: TextStyle(
                   color: isDark ? AppColors.darkText : AppColors.lightText,
-                  fontSize: 15,
+                  fontSize: r.sp(15),
                 ),
               ),
               dense: true,
@@ -218,12 +228,13 @@ class HistoryDrawer extends StatelessWidget {
               leading: Icon(
                 Icons.logout_outlined,
                 color: isDark ? AppColors.darkText : AppColors.lightText,
+                size: r.icon(22),
               ),
               title: Text(
                 'Logout',
                 style: TextStyle(
                   color: isDark ? AppColors.darkText : AppColors.lightText,
-                  fontSize: 15,
+                  fontSize: r.sp(15),
                 ),
               ),
               dense: true,
@@ -232,7 +243,7 @@ class HistoryDrawer extends StatelessWidget {
                 onLogout();
               },
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: r.h(8)),
           ],
         ),
       ),
@@ -259,21 +270,23 @@ class _ChatHistoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 2),
+      margin: r.symmetricPadding(vertical: 2),
       decoration: BoxDecoration(
         color: isActive
             ? (isDark
                 ? AppColors.primaryBlueDark.withValues(alpha: 0.2)
                 : AppColors.primaryBlue.withValues(alpha: 0.08))
             : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(r.r(10)),
       ),
       child: ListTile(
         dense: true,
         leading: Icon(
           Icons.chat_bubble_outline,
-          size: 20,
+          size: r.icon(20),
           color: isActive
               ? AppColors.primaryBlue
               : (isDark
@@ -285,7 +298,7 @@ class _ChatHistoryTile extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: r.sp(14),
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
             color: isDark ? AppColors.darkText : AppColors.lightText,
           ),
@@ -293,7 +306,7 @@ class _ChatHistoryTile extends StatelessWidget {
         subtitle: Text(
           ChatService.formatDate(session.lastMessageAt),
           style: TextStyle(
-            fontSize: 11,
+            fontSize: r.sp(11),
             color: isDark
                 ? AppColors.darkTextSecondary
                 : AppColors.lightTextSecondary,
@@ -302,7 +315,7 @@ class _ChatHistoryTile extends StatelessWidget {
         trailing: PopupMenuButton<String>(
           icon: Icon(
             Icons.more_vert,
-            size: 18,
+            size: r.icon(18),
             color: isDark
                 ? AppColors.darkTextSecondary
                 : AppColors.lightTextSecondary,
