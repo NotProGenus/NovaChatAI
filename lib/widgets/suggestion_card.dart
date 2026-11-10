@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
+import '../utils/responsive.dart';
 
 class SuggestionCard extends StatelessWidget {
   final IconData icon;
@@ -18,16 +19,17 @@ class SuggestionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final r = Responsive.of(context);
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(r.w(14)),
         decoration: BoxDecoration(
           color: isDark
               ? AppColors.suggestionCardDark
               : AppColors.suggestionCardLight,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(r.r(16)),
           border: Border.all(
             color: isDark ? AppColors.darkDivider : Colors.grey[200]!,
           ),
@@ -44,33 +46,33 @@ class SuggestionCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(r.w(8)),
               decoration: BoxDecoration(
                 color: isDark
                     ? AppColors.suggestionIconBgDark
                     : AppColors.suggestionIconBg,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(r.r(10)),
               ),
               child: Icon(
                 icon,
                 color: AppColors.primaryBlue,
-                size: 22,
+                size: r.icon(22),
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: r.h(10)),
             Text(
               title,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: r.sp(14),
                 fontWeight: FontWeight.w600,
                 color: isDark ? AppColors.darkText : AppColors.lightText,
               ),
             ),
-            const SizedBox(height: 3),
+            SizedBox(height: r.h(3)),
             Text(
               subtitle,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: r.sp(11),
                 color: isDark
                     ? AppColors.darkTextSecondary
                     : AppColors.lightTextSecondary,
@@ -90,6 +92,8 @@ class SuggestionGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive.of(context);
+
     final suggestions = [
       {
         'icon': Icons.school_outlined,
@@ -117,16 +121,20 @@ class SuggestionGrid extends StatelessWidget {
       },
     ];
 
+    // Calculate a responsive aspect ratio based on screen width
+    // Smaller screens need taller cards, larger screens can be wider
+    final aspectRatio = r.isSmallPhone ? 1.0 : (r.isLargePhone ? 1.25 : 1.15);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: r.symmetricPadding(horizontal: 20),
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.15,
+          crossAxisSpacing: r.w(12),
+          mainAxisSpacing: r.h(12),
+          childAspectRatio: aspectRatio,
         ),
         itemCount: suggestions.length,
         itemBuilder: (context, index) {
