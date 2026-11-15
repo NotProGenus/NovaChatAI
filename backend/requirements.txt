@@ -20,3 +20,4 @@ langchain-text-splitters
 langchain-chroma
 langchain-google-genai
 google-auth
+httpx
