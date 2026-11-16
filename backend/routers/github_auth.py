@@ -4,7 +4,7 @@ from schemas.oauth import OAuthResponse, OAuthToken
 from database import get_db
 from security.tokenverify import verify_github_token
 from security.auth import create_access_token
-from crud.user import get_user_by_email, create_user
+from crud.user import get_user_by_email_and_provider, create_user
 
 router = APIRouter(prefix = "/auth", tags = ["Authentication"])
 
@@ -19,7 +19,7 @@ async def github_signup(
     email = github_user["email"]
     name = github_user["name"]
 
-    user = get_user_by_email(db, email)
+    user = get_user_by_email_and_provider(db, email, "github")
 
     if user:
         raise HTTPException(
@@ -49,7 +49,7 @@ async def github_login(
 
     email = github_user["email"]
 
-    user = get_user_by_email(db, email)
+    user = get_user_by_email_and_provider(db, email, "github")
 
     if not user:
         raise HTTPException(

@@ -6,4 +6,5 @@ class User(Base):
 
     id       = Column(Integer, primary_key = True, index = True)
     name     = Column(String(30), nullable = False)
-    email    = Column(String(50), unique = True, index = True, nullable = False)
+    email    = Column(String(50), unique = False, index = True, nullable = False)
+    provider = Column(String(20), nullable=False)

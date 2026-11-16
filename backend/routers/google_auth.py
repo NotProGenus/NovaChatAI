@@ -4,7 +4,7 @@ from schemas.oauth import OAuthResponse, OAuthToken
 from database import get_db
 from security.tokenverify import verify_google_token
 from security.auth import create_access_token
-from crud.user import get_user_by_email, create_user
+from crud.user import get_user_by_email_and_provider, create_user
 
 router = APIRouter(prefix = "/auth", tags = ["Authentication"])
 
@@ -18,7 +18,7 @@ def google_signup(
     email = google_user["email"]
     name = google_user.get("name") or email.split("@")[0]
 
-    user = get_user_by_email(db, email)
+    user = get_user_by_email_and_provider(db, email,"google")
 
     if user:
         raise HTTPException(
@@ -48,7 +48,7 @@ def google_login(
 
     email = google_user["email"]
 
-    user = get_user_by_email(db, email)
+    user = get_user_by_email_and_provider(db, email, "google")
 
     if not user:
         raise HTTPException(
