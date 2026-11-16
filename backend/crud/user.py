@@ -18,4 +18,6 @@ def create_user(db: Session, name: str, email: str):
 
 def get_user_by_email(db: Session, email: str):
 
-    return db.query(User).filter(User.email == email).first()
+    query = db.query(User)
+
+    return query.filter(User.email == email).first()

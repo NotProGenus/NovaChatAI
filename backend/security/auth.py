@@ -1,4 +1,3 @@
-
 import os
 
 from datetime import datetime, timedelta, timezone
@@ -77,7 +76,8 @@ def get_current_user(
 
     user_id = verify_token(token)
 
-    user = db.query(User).filter(User.id == user_id).first()
+    query = db.query(User)
+    user = query.filter(User.id == user_id).first()
 
     if user is None:
         raise HTTPException(
