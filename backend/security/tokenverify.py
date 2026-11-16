@@ -74,7 +74,6 @@ async def verify_github_token(token: str):
 
         emails = email_response.json()
 
-    # Find verified primary email
     primary_email = next(
         (
             item["email"]
