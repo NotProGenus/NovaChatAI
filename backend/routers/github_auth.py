@@ -27,7 +27,7 @@ async def github_signup(
             detail="User already exists. Please login."
         )
 
-    user = create_user(db, name, email)
+    user = create_user(db, name, email, "github")
 
     access_token_jwt = create_access_token({
         "sub": str(user.id)
