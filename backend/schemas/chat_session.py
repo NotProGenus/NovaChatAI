@@ -4,7 +4,11 @@ from datetime import datetime
 
 class ChatSessionCreate(BaseModel):
 
-    title: str = Field(..., min_length=1, max_length=255)
+    title : str = Field(..., min_length=1, max_length=255)
+
+
+class ChatSessionUpdate(BaseModel):
+    title : str = Field(..., min_length=1, max_length=255)
 
 
 class ChatSessionResponse(BaseModel):
