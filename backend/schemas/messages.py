@@ -7,14 +7,14 @@ class MessageCreate(BaseModel):
     content : str = Field(..., min_length=1)
 
 
-@field_validator("content")
-@classmethod
+    @field_validator("content")
+    @classmethod
 
-def check_content(cls, value):
-    if not value.strip():
+    def check_content(cls, value):
+     if not value.strip():
         raise ValueError("Message cannot be empty")
 
-    return value.strip()
+     return value.strip()
 
 
 class MessageResponse(BaseModel):

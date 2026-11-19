@@ -4,15 +4,15 @@ from models.messages import Message
 
 
 def create_message(
-    db: Session,
-    chat_session_id: int,
-    role: str,
-    content: str
+    db              : Session,
+    chat_session_id : int,
+    role            : str,
+    content         : str
 ):
     new_message = Message(
-        chat_session_id=chat_session_id,
-        role=role,
-        content=content
+        chat_session_id = chat_session_id,
+        role = role,
+        content = content
     )
 
     db.add(new_message)
@@ -37,7 +37,7 @@ def get_chat_messages(
     start = (page - 1) * limit
 
     messages = query.order_by(
-        Message.created_at.asc()
+        Message.created_at.desc()
     ).offset(start).limit(limit).all()
 
     return messages

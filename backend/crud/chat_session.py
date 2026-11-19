@@ -5,8 +5,8 @@ from models.chat_session import ChatSession
 
 def create_chat_session(db: Session, user_id: int, title: str):
     new_session = ChatSession(
-        user_id=user_id,
-        title=title
+        user_id = user_id,
+        title = title
     )
 
     db.add(new_session)
@@ -17,10 +17,10 @@ def create_chat_session(db: Session, user_id: int, title: str):
 
 
 def get_user_chat_sessions(
-    db: Session,
-    user_id: int,
-    page: int = 1,
-    limit: int = 10
+    db      : Session,
+    user_id : int,
+    page    : int = 1,
+    limit   : int = 10
 ):
     query = db.query(ChatSession)
 
@@ -44,11 +44,6 @@ def get_chat_session(db: Session, session_id: int, user_id: int):
     ).first()
 
 
-def delete_chat_session(db: Session, chat_session: ChatSession):
-    db.delete(chat_session)
-    db.commit()
-
-
 def rename_chat_session(db: Session, chat_session: ChatSession, new_title: str):
     chat_session.title = new_title
 
@@ -56,3 +51,8 @@ def rename_chat_session(db: Session, chat_session: ChatSession, new_title: str):
     db.refresh(chat_session)
 
     return chat_session
+
+
+def delete_chat_session(db: Session, chat_session: ChatSession):
+    db.delete(chat_session)
+    db.commit()

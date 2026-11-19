@@ -21,7 +21,8 @@ from crud.messages import (
 
 from schemas.chat_session import (
     ChatSessionCreate,
-    ChatSessionUpdate
+    ChatSessionUpdate,
+    ChatSessionResponse
 )
 
 from schemas.messages import (
@@ -33,3 +34,151 @@ from schemas.messages import (
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
 
+@router.post("/sessions/create_session",
+             response_model = ChatSessionResponse)
+def new_chat_session(
+    data: ChatSessionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    chat_session = create_chat_session(
+        db,
+        current_user.id,
+        data.title
+    )
+
+    return chat_session
+
+
+@router.get("/sessions/get_session")
+def get_sessions(
+    page: int = 1,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+
+):
+    sessions = get_user_chat_sessions(
+        db,
+        current_user.id,
+        page,
+        limit
+    )
+
+    return sessions
+
+
+@router.put("/sessions/{session_id}/update_session", 
+            response_model = ChatSessionResponse)
+def update_chat_session(
+    session_id: int,
+    data: ChatSessionUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    chat_session = get_chat_session(
+        db,
+        session_id,
+        current_user.id
+    )
+
+    if not chat_session:
+        raise HTTPException(
+            status_code=404,
+            detail="Chat session not found"
+        )
+
+    updated_session = rename_chat_session(
+        db,
+        chat_session,
+        data.title
+    )
+
+    return updated_session
+
+
+@router.delete("/sessions/{session_id}/delete_session")
+def remove_chat_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    chat_session = get_chat_session(
+        db,
+        session_id,
+        current_user.id
+    )
+
+    if not chat_session:
+        raise HTTPException(
+            status_code=404,
+            detail="Chat session not found"
+        )
+
+    delete_chat_session(db, chat_session)
+
+    return {
+        "message": "Chat session deleted successfully"
+    }
+
+
+@router.post(
+    "/sessions/{session_id}/messages",
+    response_model=MessageResponse
+)
+def add_message(
+    session_id: int,
+    data: MessageCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    chat_session = get_chat_session(
+        db,
+        session_id,
+        current_user.id
+    )
+
+    if not chat_session:
+        raise HTTPException(
+            status_code=404,
+            detail="Chat session not found"
+        )
+
+    message = create_message(
+        db,
+        session_id,
+        "user",
+        data.content
+    )
+
+    return message
+
+
+@router.get("/sessions/{session_id}/messages")
+def get_messages(
+    session_id: int,
+    page: int = 1,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    chat_session = get_chat_session(
+        db,
+        session_id,
+        current_user.id
+    )
+
+    if not chat_session:
+        raise HTTPException(
+            status_code=404,
+            detail="Chat session not found"
+        )
+
+    messages = get_chat_messages(
+        db,
+        session_id,
+        page,
+        limit
+    )
+
+    return messages
