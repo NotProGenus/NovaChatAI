@@ -5,6 +5,8 @@ from database import get_db
 
 from schemas.user import UserSignup, UserLogin
 from schemas.oauth import OAuthResponse
+from security.auth import get_current_user
+from models.user import User
 
 from crud.normaluser import (
     create_normal_user,
@@ -26,7 +28,8 @@ def normal_signup(
 ):
     existing_user = get_normal_user_by_email(
         db,
-        data.email
+        data.email,
+        "Normal"
     )
 
     if existing_user:
@@ -41,7 +44,8 @@ def normal_signup(
         db,
         data.name,
         data.email,
-        hashed_password
+        hashed_password,
+        "Normal"
     )
 
     access_token = create_access_token({
@@ -62,19 +66,20 @@ def normal_login(
 ):
     user = get_normal_user_by_email(
         db,
-        data.email
+        data.email,
+        "Normal"
     )
 
     if not user:
         raise HTTPException(
-            status_code=401,
-            detail="Invalid email or password"
+            status_code=404,
+            detail="Normal account not found. Please signup first."
         )
 
     if not user.hashed_password:
         raise HTTPException(
-            status_code=401,
-            detail="Invalid email or password"
+            status_code=400,
+            detail="Password is not set for this account. Please use Google/GitHub login."
         )
 
     is_valid = verify_password(
@@ -96,4 +101,14 @@ def normal_login(
         "access_token_jwt": access_token,
         "token_type": "bearer",
         "user": user
+    }
+
+
+
+@router.post("/logout")
+def logout(
+    current_user: User = Depends(get_current_user)
+):
+    return {
+        "message": f"Logout successful for {current_user.name}"
     }

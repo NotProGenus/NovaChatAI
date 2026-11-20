@@ -1,6 +1,7 @@
 
 from sqlalchemy.orm import Session
 from models.chat_session import ChatSession
+from models.messages import Message
 
 
 def create_chat_session(db: Session, user_id: int, title: str):
@@ -38,10 +39,12 @@ def get_user_chat_sessions(
 def get_chat_session(db: Session, session_id: int, user_id: int):
     query = db.query(ChatSession)
 
-    return query.filter(
+    chat_session =  query.filter(
         ChatSession.id == session_id,
         ChatSession.user_id == user_id
     ).first()
+
+    return chat_session
 
 
 def rename_chat_session(db: Session, chat_session: ChatSession, new_title: str):
@@ -53,6 +56,16 @@ def rename_chat_session(db: Session, chat_session: ChatSession, new_title: str):
     return chat_session
 
 
+
 def delete_chat_session(db: Session, chat_session: ChatSession):
+
+    query = db.query(Message)
+
+    query = query.filter(
+        Message.chat_session_id == chat_session.id
+    )
+
+    query.delete(synchronize_session=False)
+
     db.delete(chat_session)
     db.commit()

@@ -6,12 +6,13 @@ def create_normal_user(
     db: Session,
     name: str,
     email: str,
-    hashed_password: str
+    hashed_password: str,
+    provider: str
 ):
     new_user = User(
         name=name,
         email=email,
-        provider="normal",
+        provider=provider,
         hashed_password=hashed_password
     )
 
@@ -24,7 +25,8 @@ def create_normal_user(
 
 def get_normal_user_by_email(
     db: Session,
-    email: str
+    email: str,
+    provider : str
 ):
     query = db.query(User)
 

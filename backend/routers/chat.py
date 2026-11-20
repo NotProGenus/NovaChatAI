@@ -50,7 +50,8 @@ def new_chat_session(
     return chat_session
 
 
-@router.get("/sessions/get_session")
+@router.get("/sessions/get_sessions",
+             response_model = list[ChatSessionResponse])
 def get_sessions(
     page: int = 1,
     limit: int = 10,
@@ -66,6 +67,32 @@ def get_sessions(
     )
 
     return sessions
+
+
+
+@router.get(
+    "/sessions/{session_id}/get_session",
+    response_model=ChatSessionResponse
+)
+def get_session(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    chat_session = get_chat_session(
+        db,
+        session_id,
+        current_user.id
+    )
+
+    if not chat_session:
+        raise HTTPException(
+            status_code=404,
+            detail="Chat session not found"
+        )
+
+    return chat_session
+
 
 
 @router.put("/sessions/{session_id}/update_session", 
@@ -122,6 +149,7 @@ def remove_chat_session(
     }
 
 
+
 @router.post(
     "/sessions/{session_id}/messages",
     response_model=MessageResponse
@@ -154,7 +182,8 @@ def add_message(
     return message
 
 
-@router.get("/sessions/{session_id}/messages")
+@router.get("/sessions/{session_id}/messages",
+            response_model = list[MessageResponse])
 def get_messages(
     session_id: int,
     page: int = 1,
