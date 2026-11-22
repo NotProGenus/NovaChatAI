@@ -1,8 +1,15 @@
-import 'package:chatapp/screens/signup_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'package:chatapp/screens/signup_screen.dart';
 import 'package:chatapp/screens/home_screen.dart';
 import 'package:chatapp/main.dart';
+
 import '../utils/responsive.dart';
+import '../services/auth_service.dart';
 
 class GetstartedScreen extends StatefulWidget {
   const GetstartedScreen({super.key});
@@ -13,15 +20,255 @@ class GetstartedScreen extends StatefulWidget {
 
 class _GetStartedScreenState extends State<GetstartedScreen> {
   bool showEmailPassError = false;
+
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
+  final AuthService authService = AuthService();
+  final storage = const FlutterSecureStorage();
+
+  bool isLoading = false;
   bool _obscurePassword = true;
+
   @override
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _login() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+
+    if (email.isEmpty ||
+        !email.contains('@') ||
+        !email.contains('.') ||
+        password.isEmpty) {
+      setState(() {
+        showEmailPassError = true;
+      });
+      return;
+    }
+
+    setState(() {
+      showEmailPassError = false;
+      isLoading = true;
+    });
+
+    try {
+      final response = await authService.normalLogin(
+        email: email,
+        password: password,
+      );
+
+      final user = response['user'];
+
+      final userName = user is Map
+          ? user['name']?.toString() ?? email.split('@').first
+          : email.split('@').first;
+
+      await _saveTokenAndNavigate(response, userName);
+    } on DioException catch (e) {
+      final message = e.response?.data is Map
+          ? e.response?.data['detail']?.toString()
+          : null;
+
+      _showMessage(message ?? 'Login failed');
+    } catch (e) {
+      _showMessage(e.toString());
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _googleLogin() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final GoogleSignInAccount account = await GoogleSignIn.instance
+          .authenticate();
+
+      final googleAuth = account.authentication;
+      final googleIdToken = googleAuth.idToken;
+
+      if (googleIdToken == null || googleIdToken.isEmpty) {
+        throw Exception('Google ID token not received');
+      }
+
+      final response = await authService.googleLogin(token: googleIdToken);
+
+      final user = response['user'];
+
+      final userName = user is Map
+          ? user['name']?.toString() ??
+                account.displayName ??
+                account.email.split('@').first
+          : account.displayName ?? account.email.split('@').first;
+
+      await _saveTokenAndNavigate(response, userName);
+    } on DioException catch (e) {
+      final message = e.response?.data is Map
+          ? e.response?.data['detail']?.toString()
+          : null;
+
+      _showMessage(message ?? 'Google login failed');
+    } catch (e) {
+      _showMessage(e.toString());
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _githubLogin() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final deviceData = await authService.requestGithubDeviceCode();
+
+      final deviceCode = deviceData['device_code'].toString();
+      final userCode = deviceData['user_code'].toString();
+      final verificationUrl = deviceData['verification_uri'].toString();
+
+      final expiresIn = int.parse(deviceData['expires_in'].toString());
+      final interval = int.parse(deviceData['interval'].toString());
+
+      if (!mounted) return;
+
+      final authorized = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('GitHub Verification'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('GitHub page par ye code enter karo:'),
+                const SizedBox(height: 16),
+                SelectableText(
+                  userCode,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 3,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'GitHub par authorization complete karne ke baad Continue dabao.',
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  final opened = await launchUrl(
+                    Uri.parse(verificationUrl),
+                    mode: LaunchMode.externalApplication,
+                  );
+
+                  if (!opened && dialogContext.mounted) {
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      const SnackBar(content: Text('Unable to open GitHub')),
+                    );
+                  }
+                },
+                child: const Text('Open GitHub'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext, false);
+                },
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext, true);
+                },
+                child: const Text('Continue'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (authorized != true) return;
+
+      final githubToken = await authService.pollGithubAccessToken(
+        deviceCode: deviceCode,
+        interval: interval,
+        expiresIn: expiresIn,
+      );
+
+      final response = await authService.githubLogin(token: githubToken);
+
+      final user = response['user'];
+
+      final userName = user is Map
+          ? user['name']?.toString() ?? 'User'
+          : 'User';
+
+      await _saveTokenAndNavigate(response, userName);
+    } on DioException catch (e) {
+      final message = e.response?.data is Map
+          ? e.response?.data['detail']?.toString()
+          : null;
+
+      _showMessage(message ?? 'GitHub login failed');
+    } catch (e) {
+      _showMessage(e.toString());
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveTokenAndNavigate(
+    Map<String, dynamic> response,
+    String userName,
+  ) async {
+    final token = response['access_token_jwt'];
+
+    if (token == null || token.toString().isEmpty) {
+      throw Exception('Backend token missing');
+    }
+
+    await storage.write(key: 'access_token', value: token.toString());
+
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            HomeScreen(userName: userName, mythemeNotifier: themeNotifier),
+      ),
+      (route) => false,
+    );
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Widget _buildTextField({
@@ -42,7 +289,11 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
       decoration: InputDecoration(
         hintText: myhint,
         hintStyle: TextStyle(color: Colors.black, fontSize: myfontSize),
-        prefixIcon: Icon(myprefixIcon, color: Colors.grey[500], size: r.icon(20)),
+        prefixIcon: Icon(
+          myprefixIcon,
+          color: Colors.grey[500],
+          size: r.icon(20),
+        ),
         suffixIcon: mysuffixIcon,
         filled: true,
         fillColor: Colors.white,
@@ -76,7 +327,7 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
       width: width,
       height: height,
       child: OutlinedButton.icon(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         icon: icon,
         label: Text(
           label,
@@ -156,7 +407,6 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                   child: Column(
                     children: [
                       SizedBox(height: r.h(110)),
-
                       Text(
                         "Welcome Back",
                         style: TextStyle(
@@ -165,9 +415,7 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                           color: Colors.black87,
                         ),
                       ),
-
                       SizedBox(height: r.h(6)),
-
                       Text(
                         "Log in to continue",
                         style: TextStyle(
@@ -176,14 +424,15 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-
                       SizedBox(height: r.h(30)),
-
-                      // Error message - only show when needed
                       if (showEmailPassError) ...[
                         Row(
                           children: [
-                            Icon(Icons.error_outline, color: Colors.red, size: r.icon(20)),
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red,
+                              size: r.icon(20),
+                            ),
                             SizedBox(width: r.w(8)),
                             Expanded(
                               child: Text(
@@ -198,7 +447,6 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                         ),
                         SizedBox(height: r.h(12)),
                       ],
-
                       _buildTextField(
                         mycontroller: emailController,
                         myhint: "Email",
@@ -207,9 +455,7 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                         myfontSize: fieldTextSize,
                         r: r,
                       ),
-
                       SizedBox(height: r.h(14)),
-
                       _buildTextField(
                         mycontroller: passwordController,
                         myhint: "Password",
@@ -232,14 +478,10 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                           },
                         ),
                       ),
-
-                      // Forgot Password - properly right-aligned
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {
-                            // TODO: Implement forgot password
-                          },
+                          onPressed: () {},
                           child: Text(
                             "Forgot Password?",
                             style: TextStyle(
@@ -249,41 +491,12 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                           ),
                         ),
                       ),
-
                       SizedBox(height: r.h(16)),
-
                       SizedBox(
                         width: buttonWidth,
                         height: buttonHeight,
                         child: ElevatedButton(
-                          onPressed: () {
-                            final email = emailController.text.trim();
-
-                            setState(() {
-                              if (email.isEmpty ||
-                                  !email.contains("@") ||
-                                  !email.contains(".")) {
-                                showEmailPassError = true;
-                              } else {
-                                showEmailPassError = false;
-                              }
-                            });
-
-                            if (!showEmailPassError) {
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => HomeScreen(
-                                    userName: emailController.text
-                                        .split('@')
-                                        .first,
-                                    mythemeNotifier: themeNotifier,
-                                  ),
-                                ),
-                                (route) => false,
-                              );
-                            }
-                          },
+                          onPressed: isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
                             elevation: 3,
                             backgroundColor: Colors.blue,
@@ -292,22 +505,27 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                               borderRadius: BorderRadius.circular(r.r(30)),
                             ),
                           ),
-                          child: Text(
-                            "Log In",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: buttonTextSize,
-                            ),
-                          ),
+                          child: isLoading
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                              : Text(
+                                  "Log In",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: buttonTextSize,
+                                  ),
+                                ),
                         ),
                       ),
-
                       SizedBox(height: r.h(20)),
-
                       Row(
                         children: [
                           Expanded(
-                            child: Divider(color: Colors.grey[400], thickness: 1),
+                            child: Divider(
+                              color: Colors.grey[400],
+                              thickness: 1,
+                            ),
                           ),
                           Padding(
                             padding: r.symmetricPadding(horizontal: 16),
@@ -321,13 +539,14 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                             ),
                           ),
                           Expanded(
-                            child: Divider(color: Colors.grey[400], thickness: 1),
+                            child: Divider(
+                              color: Colors.grey[400],
+                              thickness: 1,
+                            ),
                           ),
                         ],
                       ),
-
                       SizedBox(height: r.h(20)),
-
                       _buildSocialButton(
                         width: buttonWidth,
                         height: socialButtonHeight,
@@ -339,13 +558,9 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                           width: socialIconSize,
                           height: socialIconSize,
                         ),
-                        onPressed: () {
-                          // TODO: Implement Google sign up
-                        },
+                        onPressed: _googleLogin,
                       ),
-
                       SizedBox(height: r.h(12)),
-
                       _buildSocialButton(
                         width: buttonWidth,
                         height: socialButtonHeight,
@@ -357,13 +572,9 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                           width: socialIconSize,
                           height: socialIconSize,
                         ),
-                        onPressed: () {
-                          // TODO: Implement GitHub sign up
-                        },
+                        onPressed: _githubLogin,
                       ),
-
                       SizedBox(height: r.h(30)),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -384,7 +595,7 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                               );
                             },
                             child: Text(
-                              "Sign In",
+                              "Sign Up",
                               style: TextStyle(
                                 fontSize: bottomTextSize,
                                 color: Colors.blue,
@@ -394,7 +605,6 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                           ),
                         ],
                       ),
-
                       SizedBox(height: r.h(24)),
                     ],
                   ),
@@ -407,3 +617,4 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
     );
   }
 }
+

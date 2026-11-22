@@ -75,7 +75,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
                         SizedBox(height: r.h(20)),
 
-                        // Bot image — constrained to available space
                         Image.asset(
                           "utils/AI BOT.png",
                           width: r.w(160),
@@ -85,7 +84,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
                         SizedBox(height: r.h(50)),
 
-                        // Get Started button
+
                         SizedBox(
                           width: buttonWidth,
                           height: buttonHeight,
@@ -120,7 +119,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
                         SizedBox(height: r.h(18)),
 
-                        // Sign Up button
                         SizedBox(
                           width: buttonWidth,
                           height: buttonHeight,
@@ -155,7 +153,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
                         SizedBox(height: r.h(60)),
 
-                        // Bottom tagline row
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [

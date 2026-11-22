@@ -30,6 +30,18 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+    
+  dio: ^5.11.1
+  flutter_secure_storage: ^11.2.0
+  file_picker: ^13.4.1
+  flutter_markdown_plus: ^1.0.12
+  provider: ^6.1.5+1
+  intl: ^0.20.3
+  flutter_dotenv: ^6.0.2
+  google_sign_in: ^7.2.0
+  flutter_web_auth_2: ^5.0.3
+  url_launcher: ^6.3.2
+
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -57,7 +69,7 @@ flutter:
        - utils/AI BOT.png
        - utils/Google Icon.png
        - utils/GitHub Icon.png
-
+       - .env
  
 
   # To add assets to your application, add an assets section, like this:

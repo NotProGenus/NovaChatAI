@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'package:chatapp/screens/getstarted_screen.dart';
 import 'package:chatapp/screens/home_screen.dart';
 import 'package:chatapp/main.dart';
+
 import '../utils/responsive.dart';
+import '../services/auth_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -13,11 +20,16 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   bool showEmailError = false;
+
   final fullNameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+  final AuthService authService = AuthService();
+  final storage = const FlutterSecureStorage();
+
+  bool isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -28,6 +40,252 @@ class _SignupScreenState extends State<SignupScreen> {
     passwordController.dispose();
     confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _signup() async {
+    final name = fullNameController.text.trim();
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+    final confirmPassword = confirmPasswordController.text;
+
+    if (name.length < 2) {
+      _showMessage('Name must contain at least 2 characters');
+      return;
+    }
+
+    if (email.isEmpty || !email.contains('@') || !email.contains('.')) {
+      setState(() {
+        showEmailError = true;
+      });
+      return;
+    }
+
+    setState(() {
+      showEmailError = false;
+    });
+
+    if (password.length < 8) {
+      _showMessage('Password must contain at least 8 characters');
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showMessage('Passwords do not match');
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final response = await authService.normalSignup(
+        name: name,
+        email: email,
+        password: password,
+      );
+
+      await _saveTokenAndNavigate(response, name);
+    } on DioException catch (e) {
+      final message = e.response?.data is Map
+          ? e.response?.data['detail']?.toString()
+          : null;
+
+      _showMessage(message ?? 'Signup failed');
+    } catch (e) {
+      _showMessage(e.toString());
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _googleSignup() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final GoogleSignInAccount account = await GoogleSignIn.instance
+          .authenticate();
+
+      final googleAuth = account.authentication;
+      final googleIdToken = googleAuth.idToken;
+
+      if (googleIdToken == null || googleIdToken.isEmpty) {
+        throw Exception('Google ID token not received');
+      }
+
+      final response = await authService.googleSignup(token: googleIdToken);
+
+      final user = response['user'];
+
+      final userName = user is Map
+          ? user['name']?.toString() ??
+                account.displayName ??
+                account.email.split('@').first
+          : account.displayName ?? account.email.split('@').first;
+
+      await _saveTokenAndNavigate(response, userName);
+    } on DioException catch (e) {
+      final message = e.response?.data is Map
+          ? e.response?.data['detail']?.toString()
+          : null;
+
+      _showMessage(message ?? 'Google signup failed');
+    } catch (e) {
+      _showMessage(e.toString());
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _githubSignup() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final deviceData = await authService.requestGithubDeviceCode();
+
+      final deviceCode = deviceData['device_code'].toString();
+      final userCode = deviceData['user_code'].toString();
+      final verificationUrl = deviceData['verification_uri'].toString();
+
+      final expiresIn = int.parse(deviceData['expires_in'].toString());
+      final interval = int.parse(deviceData['interval'].toString());
+
+      if (!mounted) return;
+
+      final authorized = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('GitHub Verification'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('GitHub page par ye code enter karo:'),
+                const SizedBox(height: 16),
+                SelectableText(
+                  userCode,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 3,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'GitHub par authorization complete karne ke baad Continue dabao.',
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  final opened = await launchUrl(
+                    Uri.parse(verificationUrl),
+                    mode: LaunchMode.externalApplication,
+                  );
+
+                  if (!opened && dialogContext.mounted) {
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      const SnackBar(content: Text('Unable to open GitHub')),
+                    );
+                  }
+                },
+                child: const Text('Open GitHub'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext, false);
+                },
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext, true);
+                },
+                child: const Text('Continue'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (authorized != true) return;
+
+      final githubToken = await authService.pollGithubAccessToken(
+        deviceCode: deviceCode,
+        interval: interval,
+        expiresIn: expiresIn,
+      );
+
+      final response = await authService.githubSignup(token: githubToken);
+
+      final user = response['user'];
+
+      final userName = user is Map
+          ? user['name']?.toString() ?? 'User'
+          : 'User';
+
+      await _saveTokenAndNavigate(response, userName);
+    } on DioException catch (e) {
+      final message = e.response?.data is Map
+          ? e.response?.data['detail']?.toString()
+          : null;
+
+      _showMessage(message ?? 'GitHub signup failed');
+    } catch (e) {
+      _showMessage(e.toString());
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveTokenAndNavigate(
+    Map<String, dynamic> response,
+    String userName,
+  ) async {
+    final token = response['access_token_jwt'];
+
+    if (token == null || token.toString().isEmpty) {
+      throw Exception('Backend token missing');
+    }
+
+    await storage.write(key: 'access_token', value: token.toString());
+
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            HomeScreen(userName: userName, mythemeNotifier: themeNotifier),
+      ),
+      (route) => false,
+    );
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Widget _buildTextField({
@@ -48,7 +306,11 @@ class _SignupScreenState extends State<SignupScreen> {
       decoration: InputDecoration(
         hintText: myhint,
         hintStyle: TextStyle(color: Colors.black, fontSize: myfontSize),
-        prefixIcon: Icon(myprefixIcon, color: Colors.grey[500], size: r.icon(20)),
+        prefixIcon: Icon(
+          myprefixIcon,
+          color: Colors.grey[500],
+          size: r.icon(20),
+        ),
         suffixIcon: mysuffixIcon,
         filled: true,
         fillColor: Colors.white,
@@ -82,7 +344,7 @@ class _SignupScreenState extends State<SignupScreen> {
       width: width,
       height: height,
       child: OutlinedButton.icon(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         icon: icon,
         label: Text(
           label,
@@ -162,7 +424,6 @@ class _SignupScreenState extends State<SignupScreen> {
                   child: Column(
                     children: [
                       SizedBox(height: r.h(110)),
-
                       Text(
                         "Create Account",
                         style: TextStyle(
@@ -171,9 +432,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           color: Colors.black87,
                         ),
                       ),
-
                       SizedBox(height: r.h(6)),
-
                       Text(
                         "Join NovaChat",
                         style: TextStyle(
@@ -182,9 +441,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           fontWeight: FontWeight.w400,
                         ),
                       ),
-
                       SizedBox(height: r.h(30)),
-
                       _buildTextField(
                         mycontroller: fullNameController,
                         myhint: "Full Name",
@@ -192,14 +449,15 @@ class _SignupScreenState extends State<SignupScreen> {
                         myfontSize: fieldTextSize,
                         r: r,
                       ),
-
                       SizedBox(height: r.h(14)),
-
-                      // Error message - only show when needed
                       if (showEmailError) ...[
                         Row(
                           children: [
-                            Icon(Icons.error_outline, color: Colors.red, size: r.icon(20)),
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red,
+                              size: r.icon(20),
+                            ),
                             SizedBox(width: r.w(8)),
                             Expanded(
                               child: Text(
@@ -214,7 +472,6 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         SizedBox(height: r.h(12)),
                       ],
-
                       _buildTextField(
                         mycontroller: emailController,
                         myhint: "Email",
@@ -223,9 +480,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         myfontSize: fieldTextSize,
                         r: r,
                       ),
-
                       SizedBox(height: r.h(14)),
-
                       _buildTextField(
                         mycontroller: passwordController,
                         myhint: "Password",
@@ -248,9 +503,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           },
                         ),
                       ),
-
                       SizedBox(height: r.h(14)),
-
                       _buildTextField(
                         mycontroller: confirmPasswordController,
                         myhint: "Confirm Password",
@@ -268,46 +521,18 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           onPressed: () {
                             setState(() {
-                              _obscureConfirmPassword = !_obscureConfirmPassword;
+                              _obscureConfirmPassword =
+                                  !_obscureConfirmPassword;
                             });
                           },
                         ),
                       ),
-
                       SizedBox(height: r.h(28)),
-
                       SizedBox(
                         width: buttonWidth,
                         height: buttonHeight,
                         child: ElevatedButton(
-                          onPressed: () {
-                            final email = emailController.text.trim();
-
-                            setState(() {
-                              if (email.isEmpty ||
-                                  !email.contains("@") ||
-                                  !email.contains(".")) {
-                                showEmailError = true;
-                              } else {
-                                showEmailError = false;
-                              }
-                            });
-
-                            if (!showEmailError) {
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => HomeScreen(
-                                    userName: fullNameController.text.isNotEmpty
-                                        ? fullNameController.text
-                                        : emailController.text.split('@').first,
-                                    mythemeNotifier: themeNotifier,
-                                  ),
-                                ),
-                                (route) => false,
-                              );
-                            }
-                          },
+                          onPressed: isLoading ? null : _signup,
                           style: ElevatedButton.styleFrom(
                             elevation: 3,
                             backgroundColor: Colors.blue,
@@ -316,22 +541,27 @@ class _SignupScreenState extends State<SignupScreen> {
                               borderRadius: BorderRadius.circular(r.r(30)),
                             ),
                           ),
-                          child: Text(
-                            "Sign Up",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: buttonTextSize,
-                            ),
-                          ),
+                          child: isLoading
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                              : Text(
+                                  "Sign Up",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: buttonTextSize,
+                                  ),
+                                ),
                         ),
                       ),
-
                       SizedBox(height: r.h(20)),
-
                       Row(
                         children: [
                           Expanded(
-                            child: Divider(color: Colors.grey[400], thickness: 1),
+                            child: Divider(
+                              color: Colors.grey[400],
+                              thickness: 1,
+                            ),
                           ),
                           Padding(
                             padding: r.symmetricPadding(horizontal: 16),
@@ -345,13 +575,14 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                           ),
                           Expanded(
-                            child: Divider(color: Colors.grey[400], thickness: 1),
+                            child: Divider(
+                              color: Colors.grey[400],
+                              thickness: 1,
+                            ),
                           ),
                         ],
                       ),
-
                       SizedBox(height: r.h(20)),
-
                       _buildSocialButton(
                         width: buttonWidth,
                         height: socialButtonHeight,
@@ -363,13 +594,9 @@ class _SignupScreenState extends State<SignupScreen> {
                           width: socialIconSize,
                           height: socialIconSize,
                         ),
-                        onPressed: () {
-                          // TODO: Implement Google sign up
-                        },
+                        onPressed: _googleSignup,
                       ),
-
                       SizedBox(height: r.h(12)),
-
                       _buildSocialButton(
                         width: buttonWidth,
                         height: socialButtonHeight,
@@ -381,13 +608,9 @@ class _SignupScreenState extends State<SignupScreen> {
                           width: socialIconSize,
                           height: socialIconSize,
                         ),
-                        onPressed: () {
-                          // TODO: Implement GitHub sign up
-                        },
+                        onPressed: _githubSignup,
                       ),
-
                       SizedBox(height: r.h(30)),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -403,7 +626,8 @@ class _SignupScreenState extends State<SignupScreen> {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const GetstartedScreen(),
+                                  builder: (context) =>
+                                      const GetstartedScreen(),
                                 ),
                               );
                             },
@@ -418,7 +642,6 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                         ],
                       ),
-
                       SizedBox(height: r.h(24)),
                     ],
                   ),
@@ -431,3 +654,4 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 }
+
