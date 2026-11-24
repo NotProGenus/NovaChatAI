@@ -5,13 +5,13 @@ import '../utils/responsive.dart';
 class ChatInput extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
-  final VoidCallback? onMicTap;
+  final VoidCallback? onFileTap;
 
   const ChatInput({
     super.key,
     required this.controller,
     required this.onSend,
-    this.onMicTap,
+    this.onFileTap
   });
 
   void _handleSend() {
@@ -31,6 +31,16 @@ class ChatInput extends StatelessWidget {
         top: false,
         child: Row(
           children: [
+            // File attachment button
+            IconButton(
+              onPressed: onFileTap,
+              icon: Icon(
+                Icons.attach_file_rounded,
+                color: isDark ? AppColors.darkText : AppColors.lightText,
+                size: r.icon(24),
+              ),
+            ),
+
             // Text field
             Expanded(
               child: Container(
@@ -70,25 +80,13 @@ class ChatInput extends StatelessWidget {
                         onSubmitted: (_) => _handleSend(),
                       ),
                     ),
-                    // Mic button
-                    GestureDetector(
-                      onTap: onMicTap ?? () {},
-                      child: Padding(
-                        padding: EdgeInsets.only(right: r.w(8)),
-                        child: Icon(
-                          Icons.mic_none_rounded,
-                          color: isDark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.lightTextSecondary,
-                          size: r.icon(24),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
             ),
+
             SizedBox(width: r.w(8)),
+
             // Send button
             GestureDetector(
               onTap: _handleSend,
@@ -112,3 +110,4 @@ class ChatInput extends StatelessWidget {
     );
   }
 }
+

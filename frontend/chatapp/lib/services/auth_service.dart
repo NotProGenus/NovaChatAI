@@ -20,17 +20,21 @@ class AuthService {
   );
 
   // NORMAL SIGNUP
-  Future<Map<String, dynamic>> normalSignup({
+ Future<Map<String, dynamic>> normalSignup({
     required String name,
     required String email,
     required String password,
   }) async {
-    final response = await _apiService.dio.post(
-      '/auth/signup',
-      data: {'name': name, 'email': email, 'password': password},
-    );
+    try {
+      final response = await _apiService.dio.post(
+        '/auth/signup',
+        data: {'name': name, 'email': email, 'password': password},
+      );
 
-    return Map<String, dynamic>.from(response.data);
+      return Map<String, dynamic>.from(response.data);
+    } catch (e) {
+      rethrow;
+    }
   }
 
   // NORMAL LOGIN
@@ -158,9 +162,12 @@ class AuthService {
     return Map<String, dynamic>.from(response.data);
   }
 
+  
   // LOGOUT
   Future<Map<String, dynamic>> logout() async {
     final response = await _apiService.dio.post('/auth/logout');
+
+    await _apiService.storage.delete(key: 'access_token');
 
     return Map<String, dynamic>.from(response.data);
   }

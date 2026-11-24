@@ -26,8 +26,9 @@ class _SignupScreenState extends State<SignupScreen> {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
-  final AuthService authService = AuthService();
-  final storage = const FlutterSecureStorage();
+final AuthService authService = AuthService();
+final storage = const FlutterSecureStorage();
+  
 
   bool isLoading = false;
   bool _obscurePassword = true;
@@ -173,7 +174,7 @@ class _SignupScreenState extends State<SignupScreen> {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('GitHub page par ye code enter karo:'),
+                const Text('Enter this code on the github page:'),
                 const SizedBox(height: 16),
                 SelectableText(
                   userCode,
@@ -185,7 +186,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'GitHub par authorization complete karne ke baad Continue dabao.',
+                  'Click Continue after completing the github authorization.',
                 ),
               ],
             ),

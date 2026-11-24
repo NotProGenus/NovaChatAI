@@ -1,74 +1,215 @@
 import 'dart:math';
+
 import '../models/chat_model.dart';
+import 'api_service.dart';
 
 class ChatService {
+  final ApiService _apiService = ApiService();
+
   final List<ChatSession> _sessions = [];
   ChatSession? _currentSession;
 
   List<ChatSession> get sessions => List.unmodifiable(_sessions);
   ChatSession? get currentSession => _currentSession;
 
-  // Create a new chat session
-  ChatSession createNewChat() {
-    ChatSession session = ChatSession(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: 'New Chat',
+  // CREATE SESSION - BACKEND
+  Future<ChatSession> createSession({required String title}) async {
+    final response = await _apiService.dio.post(
+      '/chat/sessions/create_session',
+      data: {'title': title},
     );
+
+    final session = ChatSession.fromJson(
+      Map<String, dynamic>.from(response.data),
+    );
+
     _sessions.insert(0, session);
     _currentSession = session;
+
     return session;
   }
 
-  // Switch to an existing session
-  void switchToSession(String sessionId) {
-    _currentSession = _sessions.firstWhere((s) => s.id == sessionId);
+  // GET ALL SESSIONS - BACKEND
+  Future<List<ChatSession>> getSessions({int page = 1, int limit = 10}) async {
+    final response = await _apiService.dio.get(
+      '/chat/sessions/get_sessions',
+      queryParameters: {'page': page, 'limit': limit},
+    );
+
+    final List<dynamic> data = response.data;
+
+    final sessions = data.map((item) {
+      return ChatSession.fromJson(Map<String, dynamic>.from(item));
+    }).toList();
+
+    _sessions
+      ..clear()
+      ..addAll(sessions);
+
+    return sessions;
   }
 
-  // Delete a session
-  void deleteSession(String sessionId) {
+  // GET SINGLE SESSION - BACKEND
+  Future<ChatSession> getSession({required String sessionId}) async {
+    final response = await _apiService.dio.get(
+      '/chat/sessions/$sessionId/get_session',
+    );
+
+    final session = ChatSession.fromJson(
+      Map<String, dynamic>.from(response.data),
+    );
+
+    final index = _sessions.indexWhere((s) => s.id == sessionId);
+
+    if (index != -1) {
+      _sessions[index] = session;
+    } else {
+      _sessions.insert(0, session);
+    }
+
+    _currentSession = session;
+
+    return session;
+  }
+
+  // UPDATE SESSION TITLE - BACKEND
+  Future<ChatSession> updateSession({
+    required String sessionId,
+    required String title,
+  }) async {
+    final response = await _apiService.dio.put(
+      '/chat/sessions/$sessionId/update_session',
+      data: {'title': title},
+    );
+
+    final updatedSession = ChatSession.fromJson(
+      Map<String, dynamic>.from(response.data),
+    );
+
+    final index = _sessions.indexWhere((s) => s.id == sessionId);
+
+    if (index != -1) {
+      _sessions[index].title = updatedSession.title;
+    }
+
+    if (_currentSession?.id == sessionId) {
+      _currentSession!.title = updatedSession.title;
+    }
+
+    return updatedSession;
+  }
+
+  // DELETE SESSION - BACKEND
+  Future<Map<String, dynamic>> deleteChatSession({
+    required String sessionId,
+  }) async {
+    final response = await _apiService.dio.delete(
+      '/chat/sessions/$sessionId/delete_session',
+    );
+
     _sessions.removeWhere((s) => s.id == sessionId);
+
     if (_currentSession?.id == sessionId) {
       _currentSession = _sessions.isNotEmpty ? _sessions.first : null;
     }
+
+    return Map<String, dynamic>.from(response.data);
   }
 
-  // Rename a session
-  void renameSession(String sessionId, String newTitle) {
-    final session = _sessions.firstWhere((s) => s.id == sessionId);
-    session.title = newTitle;
+  // ADD USER MESSAGE - BACKEND
+  Future<ChatMessage> addMessage({
+    required String sessionId,
+    required String content,
+  }) async {
+    final response = await _apiService.dio.post(
+      '/chat/sessions/$sessionId/messages',
+      data: {'content': content},
+    );
+
+    final message = ChatMessage.fromJson(
+      Map<String, dynamic>.from(response.data),
+    );
+
+    final index = _sessions.indexWhere((s) => s.id == sessionId);
+
+    if (index != -1) {
+      _sessions[index].messages.add(message);
+      _sessions[index].lastMessageAt = message.timestamp;
+    } else if (_currentSession?.id == sessionId) {
+      _currentSession!.messages.add(message);
+      _currentSession!.lastMessageAt = message.timestamp;
+    }
+
+    return message;
   }
 
-  // Send a message and get AI response
-  ChatMessage sendMessage(String text) {
+  // GET MESSAGES - BACKEND
+  Future<List<ChatMessage>> getMessages({
+    required String sessionId,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final response = await _apiService.dio.get(
+      '/chat/sessions/$sessionId/messages',
+      queryParameters: {'page': page, 'limit': limit},
+    );
+
+    final List<dynamic> data = response.data;
+
+    final messages = data.map((item) {
+      return ChatMessage.fromJson(Map<String, dynamic>.from(item));
+    }).toList();
+
+    final index = _sessions.indexWhere((s) => s.id == sessionId);
+
+    if (index != -1) {
+      _sessions[index].messages
+        ..clear()
+        ..addAll(messages);
+    }
+
+    if (_currentSession?.id == sessionId) {
+      _currentSession!.messages
+        ..clear()
+        ..addAll(messages);
+    }
+
+    return messages;
+  }
+
+  // SWITCH SESSION - BACKEND
+  Future<void> switchToSession(String sessionId) async {
+    await getSession(sessionId: sessionId);
+    await getMessages(sessionId: sessionId);
+  }
+
+  // SEND USER MESSAGE - BACKEND
+  Future<ChatMessage> sendMessage(String text) async {
     if (_currentSession == null) {
-      createNewChat();
+      throw Exception('No active chat session');
     }
 
-    ChatMessage userMessage = ChatMessage(text: text, isUser: true);
-    _currentSession!.messages.add(userMessage);
-    _currentSession!.lastMessageAt = DateTime.now();
-
-    // Auto-title the chat based on first message
-    if (_currentSession!.messages.where((m) => m.isUser).length == 1) {
-      _currentSession!.title = text.length > 30 ? '${text.substring(0, 30)}...' : text;
-    }
-
-    return userMessage;
+    return await addMessage(sessionId: _currentSession!.id, content: text);
   }
 
-  // Generate a simulated AI response
+  // DUMMY AI RESPONSE - UNCHANGED
   ChatMessage generateAIResponse(String userMessage) {
     final response = _getSimulatedResponse(userMessage);
+
     final aiMessage = ChatMessage(text: response, isUser: false);
+
     _currentSession!.messages.add(aiMessage);
+
     return aiMessage;
   }
 
+  // DUMMY RESPONSE GENERATOR - UNCHANGED
   String _getSimulatedResponse(String message) {
     final lowerMessage = message.toLowerCase();
 
-    // Campus info responses
-    if (lowerMessage.contains('library') || lowerMessage.contains('timings') || lowerMessage.contains('timing')) {
+    if (lowerMessage.contains('library') ||
+        lowerMessage.contains('timings') ||
+        lowerMessage.contains('timing')) {
       return '📚 Library Timings:\n\n'
           '• Monday - Friday: 8:00 AM - 10:00 PM\n'
           '• Saturday: 9:00 AM - 6:00 PM\n'
@@ -76,7 +217,8 @@ class ChatService {
           'The digital library is accessible 24/7 through the campus portal.';
     }
 
-    if (lowerMessage.contains('hostel') || lowerMessage.contains('facilities')) {
+    if (lowerMessage.contains('hostel') ||
+        lowerMessage.contains('facilities')) {
       return '🏠 Hostel Facilities:\n\n'
           '• Wi-Fi available in all rooms\n'
           '• Common room with TV and indoor games\n'
@@ -96,8 +238,8 @@ class ChatService {
           'Need specific info? Just ask!';
     }
 
-    // Study help responses
-    if (lowerMessage.contains('dsa') || lowerMessage.contains('data structure')) {
+    if (lowerMessage.contains('dsa') ||
+        lowerMessage.contains('data structure')) {
       return '💻 Data Structures & Algorithms:\n\n'
           'Key topics to focus on:\n'
           '1. Arrays & Strings\n'
@@ -109,8 +251,10 @@ class ChatService {
           'Tip: Practice on LeetCode & GeeksforGeeks daily!';
     }
 
-    if (lowerMessage.contains('study') || lowerMessage.contains('studies') ||
-        lowerMessage.contains('help') || lowerMessage.contains('explain')) {
+    if (lowerMessage.contains('study') ||
+        lowerMessage.contains('studies') ||
+        lowerMessage.contains('help') ||
+        lowerMessage.contains('explain')) {
       return '📖 I can help you with your studies!\n\n'
           'Here are some ways I can assist:\n'
           '• Explain complex concepts\n'
@@ -121,8 +265,8 @@ class ChatService {
           'What subject or topic would you like help with?';
     }
 
-    // Placement responses
-    if (lowerMessage.contains('placement') || lowerMessage.contains('interview')) {
+    if (lowerMessage.contains('placement') ||
+        lowerMessage.contains('interview')) {
       return '💼 Placement Preparation:\n\n'
           '• Aptitude: Practice quantitative & logical reasoning\n'
           '• Coding: Solve 2-3 problems daily on LeetCode\n'
@@ -132,8 +276,9 @@ class ChatService {
           'Upcoming placement drive: TCS (Oct 15), Infosys (Oct 22)';
     }
 
-    // Mess menu
-    if (lowerMessage.contains('mess') || lowerMessage.contains('menu') || lowerMessage.contains('food')) {
+    if (lowerMessage.contains('mess') ||
+        lowerMessage.contains('menu') ||
+        lowerMessage.contains('food')) {
       return '🍽️ Today\'s Mess Menu:\n\n'
           '🌅 Breakfast (7:30-9:00 AM):\n'
           '   Poha, Bread-Butter, Tea/Coffee\n\n'
@@ -143,7 +288,6 @@ class ChatService {
           '   Paneer Curry, Rice, Roti, Sweet';
     }
 
-    // Project ideas
     if (lowerMessage.contains('project') || lowerMessage.contains('idea')) {
       return '💡 Project Ideas:\n\n'
           '1. 🤖 AI Chatbot for Campus (like this one!)\n'
@@ -155,7 +299,6 @@ class ChatService {
           'Want detailed info on any of these?';
     }
 
-    // Events
     if (lowerMessage.contains('event') || lowerMessage.contains('fest')) {
       return '🎉 Upcoming Campus Events:\n\n'
           '• Oct 5 - Hackathon 2026 (CSE Dept)\n'
@@ -166,8 +309,9 @@ class ChatService {
           'Register through the campus app!';
     }
 
-    // Summarize
-    if (lowerMessage.contains('summarize') || lowerMessage.contains('summary') || lowerMessage.contains('document')) {
+    if (lowerMessage.contains('summarize') ||
+        lowerMessage.contains('summary') ||
+        lowerMessage.contains('document')) {
       return '📄 Document Summarization:\n\n'
           'I can help summarize your documents!\n\n'
           'Supported formats:\n'
@@ -178,7 +322,6 @@ class ChatService {
           'Just paste the text you\'d like summarized, and I\'ll provide a concise overview.';
     }
 
-    // RAG
     if (lowerMessage.contains('rag') || lowerMessage.contains('retrieval')) {
       return '🔍 RAG (Retrieval Augmented Generation):\n\n'
           'RAG is a technique that combines:\n\n'
@@ -192,29 +335,32 @@ class ChatService {
           'It\'s widely used in enterprise chatbots!';
     }
 
-    // Greetings
-    if (lowerMessage.contains('hello') || lowerMessage.contains('hi') ||
-        lowerMessage.contains('hey') || lowerMessage.contains('good')) {
+    if (lowerMessage.contains('hello') ||
+        lowerMessage.contains('hi') ||
+        lowerMessage.contains('hey') ||
+        lowerMessage.contains('good')) {
       final greetings = [
         'Hello! 👋 Welcome to NovaChat. How can I help you today?',
         'Hi there! 😊 I\'m your campus AI assistant. Ask me anything!',
         'Hey! 🌟 Ready to help you with campus info, studies, or anything else!',
       ];
+
       return greetings[Random().nextInt(greetings.length)];
     }
 
-    // Default responses
     final defaults = [
       '🤔 That\'s an interesting question! Let me think about it...\n\nI can help you with:\n• Campus information\n• Study assistance\n• Project ideas\n• Placement prep\n• Document summarization\n\nCould you be more specific?',
       '💬 I appreciate your question! While I\'m still learning, I can best help with campus-related queries, studies, and project ideas. What would you like to know?',
       '🎯 Great question! I\'m here to help with campus info, academics, placements, and more. Feel free to ask about any of these topics!',
     ];
+
     return defaults[Random().nextInt(defaults.length)];
   }
 
-  // Get formatted date string for chat history
+  // FORMAT DATE
   static String formatDate(DateTime date) {
     final now = DateTime.now();
+
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final chatDate = DateTime(date.year, date.month, date.day);
@@ -223,9 +369,21 @@ class ChatService {
     if (chatDate == yesterday) return 'Yesterday';
 
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
+
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 }
+

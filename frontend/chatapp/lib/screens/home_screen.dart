@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/chat_model.dart';
 import '../services/chat_service.dart';
 import '../utils/constants.dart';
@@ -9,6 +10,7 @@ import '../widgets/chat_input.dart';
 import '../widgets/suggestion_card.dart';
 import '../widgets/history_drawer.dart';
 import 'welcome_screen.dart';
+import '../services/auth_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userName;
@@ -26,16 +28,48 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final ChatService _chatService = ChatService();
+  final AuthService _authService = AuthService();
+
   final TextEditingController _messageController = TextEditingController();
+
   final ScrollController _scrollController = ScrollController();
+
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   bool _isTyping = false;
+  bool _isLoadingSessions = true;
 
   List<ChatMessage> get _currentMessages =>
       _chatService.currentSession?.messages ?? [];
 
   bool get _hasMessages => _currentMessages.isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSessions();
+  }
+
+  // LOAD CHAT HISTORY FROM BACKEND
+  Future<void> _loadSessions() async {
+    try {
+      await _chatService.getSessions();
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingSessions = false;
+      });
+    } catch (e) {
+      debugPrint('LOAD SESSIONS ERROR: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingSessions = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -44,27 +78,149 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  void _sendMessage(String text) {
-    if (text.trim().isEmpty) return;
+  // SEND MESSAGE
+  Future<void> _sendMessage(String text) async {
+    final message = text.trim();
+
+    if (message.isEmpty || _isTyping) return;
 
     setState(() {
-      _chatService.sendMessage(text.trim());
       _messageController.clear();
       _isTyping = true;
     });
 
-    _scrollToBottom();
+    try {
+      // Create a backend session if none is active.
+      if (_chatService.currentSession == null) {
+        final title = message.length > 30
+            ? '${message.substring(0, 30)}...'
+            : message;
 
-    // Simulate AI typing delay
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (mounted) {
-        setState(() {
-          _chatService.generateAIResponse(text.trim());
-          _isTyping = false;
-        });
-        _scrollToBottom();
+        await _chatService.createSession(title: title);
       }
-    });
+
+      final currentSession = _chatService.currentSession!;
+
+      // Check whether this is the first user message.
+      final isFirstUserMessage = currentSession.messages
+          .where((m) => m.isUser)
+          .isEmpty;
+
+      // Save user message in backend database.
+      await _chatService.sendMessage(message);
+
+      // Rename "New Chat" using the first message.
+      if (isFirstUserMessage && currentSession.title == 'New Chat') {
+        final title = message.length > 30
+            ? '${message.substring(0, 30)}...'
+            : message;
+
+        await _chatService.updateSession(
+          sessionId: currentSession.id,
+          title: title,
+        );
+      }
+
+      if (!mounted) return;
+
+      setState(() {});
+
+      _scrollToBottom();
+
+      // Keep the existing dummy AI response.
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      if (!mounted) return;
+
+      setState(() {
+        _chatService.generateAIResponse(message);
+        _isTyping = false;
+      });
+
+      _scrollToBottom();
+    } catch (e) {
+      debugPrint('SEND MESSAGE ERROR: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _isTyping = false;
+      });
+    }
+  }
+
+  // CREATE NEW CHAT IN BACKEND
+  Future<void> _startNewChat() async {
+    try {
+      await _chatService.createSession(title: 'New Chat');
+
+      if (!mounted) return;
+
+      setState(() {
+        _messageController.clear();
+        _isTyping = false;
+      });
+    } catch (e) {
+      debugPrint('CREATE SESSION ERROR: $e');
+    }
+  }
+
+  // SWITCH SESSION USING BACKEND
+  Future<void> _switchToSession(String sessionId) async {
+    try {
+      setState(() {
+        _isTyping = false;
+      });
+
+      await _chatService.switchToSession(sessionId);
+
+      if (!mounted) return;
+
+      setState(() {
+        _messageController.clear();
+      });
+
+      _scrollToBottom();
+    } catch (e) {
+      debugPrint('SWITCH SESSION ERROR: $e');
+    }
+  }
+
+  // DELETE SESSION FROM BACKEND
+  Future<void> _deleteSession(String sessionId) async {
+    try {
+      await _chatService.deleteChatSession(sessionId: sessionId);
+
+      // If the deleted session was active,
+      // load messages of the next selected session.
+      final currentSession = _chatService.currentSession;
+
+      if (currentSession != null) {
+        await _chatService.getMessages(sessionId: currentSession.id);
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _isTyping = false;
+        _messageController.clear();
+      });
+    } catch (e) {
+      debugPrint('DELETE SESSION ERROR: $e');
+    }
+  }
+
+  // RENAME SESSION IN BACKEND
+  Future<void> _renameSession(String sessionId, String newTitle) async {
+    try {
+      await _chatService.updateSession(sessionId: sessionId, title: newTitle);
+
+      if (!mounted) return;
+
+      setState(() {});
+    } catch (e) {
+      debugPrint('RENAME SESSION ERROR: $e');
+    }
   }
 
   void _scrollToBottom() {
@@ -79,38 +235,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
   }
 
-  void _startNewChat() {
-    setState(() {
-      _chatService.createNewChat();
-      _messageController.clear();
-    });
-  }
+  // LOGOUT
+  Future<void> _logout() async {
+    try {
+      await _authService.logout();
 
-  void _switchToSession(String sessionId) {
-    setState(() {
-      _chatService.switchToSession(sessionId);
-    });
-    _scrollToBottom();
-  }
+      if (!mounted) return;
 
-  void _deleteSession(String sessionId) {
-    setState(() {
-      _chatService.deleteSession(sessionId);
-    });
-  }
-
-  void _renameSession(String sessionId, String newTitle) {
-    setState(() {
-      _chatService.renameSession(sessionId, newTitle);
-    });
-  }
-
-  void _logout() {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-      (route) => false,
-    );
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      debugPrint('LOGOUT ERROR: $e');
+    }
   }
 
   PreferredSizeWidget _buildAppBar(bool isDark, Responsive r) {
@@ -139,23 +278,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
         ),
       ),
-      actions: [
-        IconButton(
-          icon: Icon(
-            Icons.settings_outlined,
-            color: isDark ? AppColors.darkText : AppColors.lightText,
-            size: r.icon(24),
-          ),
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Settings coming soon!'),
-                duration: Duration(seconds: 1),
-              ),
-            );
-          },
-        ),
-      ],
     );
   }
 
@@ -165,7 +287,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         padding: r.symmetricPadding(vertical: 40),
         child: Column(
           children: [
-            // Greeting
             Text(
               'Hello!',
               style: TextStyle(
@@ -185,7 +306,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             ),
             SizedBox(height: r.h(36)),
-            // Suggestion cards
             SuggestionGrid(onSuggestionTap: (message) => _sendMessage(message)),
           ],
         ),
@@ -196,6 +316,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final r = Responsive.of(context);
 
     return Scaffold(
@@ -204,6 +325,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ? AppColors.darkBackground
           : AppColors.lightBackground,
       appBar: _buildAppBar(isDark, r),
+
       drawer: HistoryDrawer(
         chatService: _chatService,
         currentSessionId: _chatService.currentSession?.id,
@@ -217,24 +339,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           widget.mythemeNotifier.setDarkMode(value);
         },
       ),
+
       body: Column(
         children: [
-          // Chat messages or welcome view
           Expanded(
-            child: _hasMessages ? _buildChatView(r) : _buildWelcomeView(isDark, r),
+            child: _isLoadingSessions
+                ? const Center(child: CircularProgressIndicator())
+                : _hasMessages
+                ? _buildChatView(r)
+                : _buildWelcomeView(isDark, r),
           ),
-          // Chat input
+
           ChatInput(
             controller: _messageController,
             onSend: () => _sendMessage(_messageController.text),
-            onMicTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Voice input coming soon!'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            },
           ),
         ],
       ),
@@ -250,14 +368,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         if (index < _currentMessages.length) {
           return ChatBubble(message: _currentMessages[index]);
         }
-        // Typing indicator
+
         return _buildTypingIndicator(r);
       },
     );
   }
 
- Widget _buildTypingIndicator(Responsive r) {
+  Widget _buildTypingIndicator(Responsive r) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: r.symmetricPadding(horizontal: 16, vertical: 6),
       child: Row(
@@ -305,6 +424,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 class _BouncingDot extends StatefulWidget {
   final int delay;
   final double dotSize;
+
   const _BouncingDot({required this.delay, this.dotSize = 8});
 
   @override
@@ -319,14 +439,17 @@ class _BouncingDotState extends State<_BouncingDot>
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
+
     _animation = Tween<double>(
       begin: 0,
       end: -6,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
     Future.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) {
         _controller.repeat(reverse: true);
@@ -360,3 +483,4 @@ class _BouncingDotState extends State<_BouncingDot>
     );
   }
 }
+

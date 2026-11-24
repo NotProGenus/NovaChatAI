@@ -156,7 +156,7 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('GitHub page par ye code enter karo:'),
+                const Text('Open github and enter this code:'),
                 const SizedBox(height: 16),
                 SelectableText(
                   userCode,
@@ -168,7 +168,7 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'GitHub par authorization complete karne ke baad Continue dabao.',
+                  'Click continue after completing github authorization.',
                 ),
               ],
             ),
@@ -476,19 +476,6 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
                               _obscurePassword = !_obscurePassword;
                             });
                           },
-                        ),
-                      ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {},
-                          child: Text(
-                            "Forgot Password?",
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontSize: r.sp(13),
-                            ),
-                          ),
                         ),
                       ),
                       SizedBox(height: r.h(16)),
