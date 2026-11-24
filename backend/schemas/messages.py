@@ -1,11 +1,10 @@
 from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 
-
 class MessageCreate(BaseModel):
 
     content : str = Field(..., min_length=1)
-
+    role    : str = "user"
 
     @field_validator("content")
     @classmethod

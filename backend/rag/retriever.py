@@ -1,5 +1,3 @@
-"""Store and retrieve passages within a single user's embedding space."""
-
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 

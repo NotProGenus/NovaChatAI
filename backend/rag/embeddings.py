@@ -1,5 +1,3 @@
-"""Configure one embedding space for ingestion and retrieval."""
-
 import os
 
 from langchain_google_genai import GoogleGenerativeAIEmbeddings

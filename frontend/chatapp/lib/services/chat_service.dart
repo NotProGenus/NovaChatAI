@@ -1,4 +1,7 @@
 import 'dart:math';
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
 
 import '../models/chat_model.dart';
 import 'api_service.dart';
@@ -120,10 +123,11 @@ class ChatService {
   Future<ChatMessage> addMessage({
     required String sessionId,
     required String content,
+    String role = 'user',
   }) async {
     final response = await _apiService.dio.post(
       '/chat/sessions/$sessionId/messages',
-      data: {'content': content},
+      data: {'content': content, 'role': role},
     );
 
     final message = ChatMessage.fromJson(
@@ -175,6 +179,38 @@ class ChatService {
     }
 
     return messages;
+  }
+
+  // UPLOAD DOCUMENT - RAG BACKEND
+  Future<Map<String, dynamic>> uploadDocument({
+    required String filename,
+    required Uint8List bytes,
+  }) async {
+    final formData = FormData.fromMap({
+      'file': MultipartFile.fromBytes(bytes, filename: filename),
+    });
+
+    final response = await _apiService.dio.post(
+      '/rag/upload',
+      data: formData,
+      options: Options(contentType: 'multipart/form-data'),
+    );
+
+    return Map<String, dynamic>.from(response.data);
+  }
+
+  // ASK DOCUMENT - RAG BACKEND
+  Future<Map<String, dynamic>> askDocument({
+    required String question,
+    String? documentId,
+    int k = 4,
+  }) async {
+    final response = await _apiService.dio.post(
+      '/rag/query',
+      data: {'question': question, 'document_id': documentId},
+    );
+
+    return Map<String, dynamic>.from(response.data);
   }
 
   // SWITCH SESSION - BACKEND
@@ -350,7 +386,7 @@ class ChatService {
 
     final defaults = [
       '🤔 That\'s an interesting question! Let me think about it...\n\nI can help you with:\n• Campus information\n• Study assistance\n• Project ideas\n• Placement prep\n• Document summarization\n\nCould you be more specific?',
-      '💬 I appreciate your question! While I\'m still learning, I can best help with campus-related queries, studies, and project ideas. What would you like to know?',
+      '💬 I appreciate your question! While I\'m still learning, I can best help you with campus-related queries, studies, and project ideas. What would you like to know?',
       '🎯 Great question! I\'m here to help with campus info, academics, placements, and more. Feel free to ask about any of these topics!',
     ];
 
@@ -386,4 +422,5 @@ class ChatService {
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 }
+
 

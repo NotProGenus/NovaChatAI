@@ -1,5 +1,3 @@
-"""Document ingestion and grounded question answering for the NovaChat backend."""
-
 import os
 from hashlib import sha256
 from pathlib import Path, PureWindowsPath

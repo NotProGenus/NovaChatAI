@@ -1,5 +1,3 @@
-"""Split each page separately so that citations retain their original page."""
-
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 

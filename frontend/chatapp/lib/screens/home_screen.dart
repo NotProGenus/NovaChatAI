@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../models/chat_model.dart';
 import '../services/chat_service.dart';
@@ -39,6 +40,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   bool _isTyping = false;
   bool _isLoadingSessions = true;
 
+  // Selected file
+  PlatformFile? selectedFile;
+
+  // Uploaded document ID returned by the RAG backend
+  String? _documentId;
+
   List<ChatMessage> get _currentMessages =>
       _chatService.currentSession?.messages ?? [];
 
@@ -68,6 +75,45 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       setState(() {
         _isLoadingSessions = false;
       });
+    }
+  }
+
+  Future<void> _pickFile() async {
+    try {
+      final files = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'txt'],
+      );
+
+      if (files.isNotEmpty) {
+        final file = files.first;
+
+        // Read selected file bytes
+        final bytes = await file.readAsBytes();
+
+        setState(() {
+          selectedFile = file;
+          _documentId = null;
+        });
+
+        debugPrint('Selected File: ${file.name}');
+
+        final response = await _chatService.uploadDocument(
+          filename: file.name,
+          bytes: bytes,
+        );
+
+        if (!mounted) return;
+
+        setState(() {
+          _documentId = response['document_id']?.toString();
+        });
+
+        debugPrint('DOCUMENT UPLOAD RESPONSE: $response');
+        debugPrint('DOCUMENT ID: $_documentId');
+      }
+    } catch (e) {
+      debugPrint('FILE UPLOAD ERROR: $e');
     }
   }
 
@@ -124,18 +170,37 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       if (!mounted) return;
 
       setState(() {});
-
       _scrollToBottom();
 
-      // Keep the existing dummy AI response.
-      await Future.delayed(const Duration(milliseconds: 800));
+      if (_documentId != null && _documentId!.isNotEmpty) {
+        // GET AI ANSWER FROM RAG BACKEND
+        final response = await _chatService.askDocument(
+          question: message,
+          documentId: _documentId,
+        );
 
-      if (!mounted) return;
+        final answer = response['answer']?.toString() ?? '';
 
-      setState(() {
-        _chatService.generateAIResponse(message);
-        _isTyping = false;
-      });
+        if (!mounted) return;
+
+        setState(() {
+          _chatService.currentSession!.messages.add(
+            ChatMessage(text: answer, isUser: false),
+          );
+
+          _isTyping = false;
+        });
+      } else {
+        // EXISTING DUMMY AI RESPONSE
+        await Future.delayed(const Duration(milliseconds: 800));
+
+        if (!mounted) return;
+
+        setState(() {
+          _chatService.generateAIResponse(message);
+          _isTyping = false;
+        });
+      }
 
       _scrollToBottom();
     } catch (e) {
@@ -159,6 +224,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       setState(() {
         _messageController.clear();
         _isTyping = false;
+        selectedFile = null;
+        _documentId = null;
       });
     } catch (e) {
       debugPrint('CREATE SESSION ERROR: $e');
@@ -178,6 +245,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
       setState(() {
         _messageController.clear();
+        selectedFile = null;
+        _documentId = null;
       });
 
       _scrollToBottom();
@@ -191,8 +260,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     try {
       await _chatService.deleteChatSession(sessionId: sessionId);
 
-      // If the deleted session was active,
-      // load messages of the next selected session.
+      // Load messages of the next selected session.
       final currentSession = _chatService.currentSession;
 
       if (currentSession != null) {
@@ -204,6 +272,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       setState(() {
         _isTyping = false;
         _messageController.clear();
+        selectedFile = null;
+        _documentId = null;
       });
     } catch (e) {
       debugPrint('DELETE SESSION ERROR: $e');
@@ -324,6 +394,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       backgroundColor: isDark
           ? AppColors.darkBackground
           : AppColors.lightBackground,
+
       appBar: _buildAppBar(isDark, r),
 
       drawer: HistoryDrawer(
@@ -353,6 +424,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ChatInput(
             controller: _messageController,
             onSend: () => _sendMessage(_messageController.text),
+            onFileTap: _pickFile,
           ),
         ],
       ),
@@ -483,4 +555,5 @@ class _BouncingDotState extends State<_BouncingDot>
     );
   }
 }
+
 

@@ -9,6 +9,7 @@ from routers.google_auth import router as google_router
 from routers.github_auth import router as github_router
 from routers.chat import router as chat_router
 from routers.normal_auth import router as normal_router
+from routers.ragrouter import router as rag_router
 
 app = FastAPI(
     title="NovaChat API",
@@ -30,3 +31,4 @@ app.include_router(google_router)
 app.include_router(github_router)
 app.include_router(chat_router)
 app.include_router(normal_router)
+app.include_router(rag_router)

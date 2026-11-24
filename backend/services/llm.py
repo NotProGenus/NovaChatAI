@@ -1,5 +1,3 @@
-"""Generate cited answers from retrieved passages with Gemini."""
-
 import json
 import os
 

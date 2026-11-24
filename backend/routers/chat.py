@@ -175,7 +175,7 @@ def add_message(
     message = create_message(
         db,
         session_id,
-        "user",
+        data.role,
         data.content
     )
 
