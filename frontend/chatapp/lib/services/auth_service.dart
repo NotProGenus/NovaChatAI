@@ -20,7 +20,7 @@ class AuthService {
   );
 
   // NORMAL SIGNUP
- Future<Map<String, dynamic>> normalSignup({
+  Future<Map<String, dynamic>> normalSignup({
     required String name,
     required String email,
     required String password,
@@ -162,7 +162,6 @@ class AuthService {
     return Map<String, dynamic>.from(response.data);
   }
 
-  
   // LOGOUT
   Future<Map<String, dynamic>> logout() async {
     final response = await _apiService.dio.post('/auth/logout');
@@ -172,4 +171,5 @@ class AuthService {
     return Map<String, dynamic>.from(response.data);
   }
 }
+
 

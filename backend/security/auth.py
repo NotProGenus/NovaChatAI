@@ -1,3 +1,4 @@
+
 import os
 
 from datetime import datetime, timedelta, timezone
@@ -5,16 +6,19 @@ from dotenv import load_dotenv
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.orm import Session
 
 from database import get_db
 from models.user import User
-
-from sqlalchemy.orm import Session
 
 
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
+
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY is missing from .env file")
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
@@ -38,7 +42,6 @@ def create_access_token(data: dict):
     )
 
     return encoded_jwt
-
 
 
 def verify_token(token: str):
@@ -76,8 +79,9 @@ def get_current_user(
 
     user_id = verify_token(token)
 
-    query = db.query(User)
-    user = query.filter(User.id == user_id).first()
+    user = db.query(User).filter(
+        User.id == user_id
+    ).first()
 
     if user is None:
         raise HTTPException(
@@ -86,3 +90,4 @@ def get_current_user(
         )
 
     return user
+
