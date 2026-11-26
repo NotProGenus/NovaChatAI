@@ -181,22 +181,29 @@ class ChatService {
     return messages;
   }
 
-  // UPLOAD DOCUMENT - RAG BACKEND
-  Future<Map<String, dynamic>> uploadDocument({
+Future<Map<String, dynamic>> uploadDocument({
     required String filename,
     required Uint8List bytes,
   }) async {
-    final formData = FormData.fromMap({
-      'file': MultipartFile.fromBytes(bytes, filename: filename),
-    });
+    try {
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(bytes, filename: filename),
+      });
+      print("UPLOAD HEADERS: ${_apiService.dio.options.headers}");
 
-    final response = await _apiService.dio.post(
-      '/rag/upload',
-      data: formData,
-      options: Options(contentType: 'multipart/form-data'),
-    );
+      final response = await _apiService.dio.post(
+        '/rag/upload',
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
 
-    return Map<String, dynamic>.from(response.data);
+      return Map<String, dynamic>.from(response.data);
+    } on DioException catch (e) {
+      print('UPLOAD STATUS: ${e.response?.statusCode}');
+      print('UPLOAD ERROR DETAIL: ${e.response?.data}');
+      print('UPLOAD REQUEST URL: ${e.requestOptions.uri}');
+      rethrow;
+    }
   }
 
   // ASK DOCUMENT - RAG BACKEND
@@ -207,7 +214,7 @@ class ChatService {
   }) async {
     final response = await _apiService.dio.post(
       '/rag/query',
-      data: {'question': question, 'document_id': documentId},
+      data: {'question': question, 'document_id': documentId, 'k': k},
     );
 
     return Map<String, dynamic>.from(response.data);

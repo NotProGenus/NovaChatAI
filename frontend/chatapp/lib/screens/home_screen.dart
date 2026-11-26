@@ -421,10 +421,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 : _buildWelcomeView(isDark, r),
           ),
 
-          ChatInput(
+        ChatInput(
             controller: _messageController,
             onSend: () => _sendMessage(_messageController.text),
             onFileTap: _pickFile,
+
+            attachmentName: selectedFile?.name,
+
+            onRemoveAttachment: () {
+              setState(() {
+                selectedFile = null;
+                _documentId = null;
+              });
+            },
           ),
         ],
       ),

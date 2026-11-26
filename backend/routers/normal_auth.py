@@ -4,9 +4,15 @@ from sqlalchemy.orm import Session
 from database import get_db
 
 from schemas.user import UserSignup, UserLogin
-from schemas.oauth import OAuthResponse
-from security.auth import get_current_user
+from schemas.oauth import OAuthResponse,RefreshTokenRequest,RefreshTokenResponse
 from models.user import User
+
+from security.auth import (
+    get_current_user, 
+    create_access_token,
+    create_refresh_token,
+    verify_refresh_token
+)
 
 from crud.normaluser import (
     create_normal_user,
@@ -16,7 +22,6 @@ from crud.normaluser import (
 from security.passhash import (
     hash_password,
     verify_password,
-    create_access_token
 )
 
 router = APIRouter(prefix = "/auth", tags = ["Authentication"])
@@ -52,8 +57,13 @@ def normal_signup(
         "sub": str(new_user.id)
     })
 
+    refresh_token = create_refresh_token({
+        "sub": str(new_user.id)
+    })
+
     return {
         "access_token_jwt": access_token,
+        "refresh_token_jwt": refresh_token,
         "token_type": "bearer",
         "user": new_user
     }
@@ -97,11 +107,45 @@ def normal_login(
         "sub": str(user.id)
     })
 
+    refresh_token = create_refresh_token({
+            "sub": str(user.id)
+        })
+
     return {
         "access_token_jwt": access_token,
+        "refresh_token_jwt": refresh_token,
         "token_type": "bearer",
         "user": user
     }
+
+
+
+@router.post("/refresh", response_model = RefreshTokenResponse)
+def refresh_access_token(
+    data: RefreshTokenRequest,
+    db: Session = Depends(get_db)
+):
+    user_id = verify_refresh_token(data.refresh_token)
+
+    user = db.query(User).filter(
+        User.id == user_id
+    ).first()
+
+    if user is None:
+        raise HTTPException(
+            status_code=401,
+            detail="User not found"
+        )
+
+    new_access_token = create_access_token({
+        "sub": str(user.id)
+    })
+
+    return {
+        "access_token_jwt": new_access_token,
+        "token_type": "bearer"
+    }
+
 
 
 

@@ -15,7 +15,7 @@ class AuthService {
         'Content-Type': 'application/json',
       },
       connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 120),
     ),
   );
 
@@ -164,12 +164,22 @@ class AuthService {
 
   // LOGOUT
   Future<Map<String, dynamic>> logout() async {
-    final response = await _apiService.dio.post('/auth/logout');
+    Map<String, dynamic> result = {};
 
-    await _apiService.storage.delete(key: 'access_token');
+    try {
+      final response = await _apiService.dio.post('/auth/logout');
 
-    return Map<String, dynamic>.from(response.data);
+      result = Map<String, dynamic>.from(response.data);
+    } catch (e) {
+      print('SERVER LOGOUT FAILED: $e');
+      result = {'message': 'Logged out locally'};
+    } finally {
+      await _apiService.storage.delete(key: 'access_token');
+      await _apiService.storage.delete(key: 'refresh_token');
+
+      print('LOCAL TOKENS CLEARED');
+    }
+
+    return result;
   }
 }
-
-

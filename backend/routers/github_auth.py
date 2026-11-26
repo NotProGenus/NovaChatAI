@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from schemas.oauth import OAuthResponse, OAuthToken
 from database import get_db
 from security.tokenverify import verify_github_token
-from security.auth import create_access_token
+from security.auth import create_access_token, create_refresh_token
 from crud.google_github_user import get_user_by_email_and_provider, create_user
 
 router = APIRouter(prefix = "/auth", tags = ["Authentication"])
@@ -33,8 +33,13 @@ async def github_signup(
         "sub": str(user.id)
     })
 
+    refresh_token_jwt = create_refresh_token({
+                "sub": str(user.id)
+            })
+
     return {
         "access_token_jwt": access_token_jwt,
+        "refresh_token_jwt": refresh_token_jwt,
         "token_type": "bearer",
         "user": user
     }
@@ -61,8 +66,13 @@ async def github_login(
         "sub": str(user.id)
     })
 
+    refresh_token_jwt = create_refresh_token({
+                    "sub": str(user.id)
+                })
+
     return {
         "access_token_jwt": access_token_jwt,
+        "refresh_token_jwt": refresh_token_jwt,
         "token_type": "bearer",
         "user": user
     }

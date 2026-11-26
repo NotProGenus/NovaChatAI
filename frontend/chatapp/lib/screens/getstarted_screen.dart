@@ -243,13 +243,25 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
     Map<String, dynamic> response,
     String userName,
   ) async {
-    final token = response['access_token_jwt'];
+    final accessToken = response['access_token_jwt'];
+    final refreshToken = response['refresh_token_jwt'];
 
-    if (token == null || token.toString().isEmpty) {
+    if (accessToken == null || accessToken.toString().isEmpty) {
       throw Exception('Backend token missing');
     }
 
-    await storage.write(key: 'access_token', value: token.toString());
+    if (refreshToken == null || refreshToken.toString().isEmpty) {
+      throw Exception('Backend refresh token missing');
+    }
+
+   // Save Access Token
+    await storage.write(key: 'access_token', value: accessToken.toString());
+
+    // Save Refresh Token
+    await storage.write(key: 'refresh_token', value: refreshToken.toString());
+
+    print('ACCESS TOKEN SAVED: YES');
+    print('REFRESH TOKEN SAVED: YES');
 
     if (!mounted) return;
 
@@ -604,4 +616,3 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
     );
   }
 }
-

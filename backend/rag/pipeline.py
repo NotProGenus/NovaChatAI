@@ -37,4 +37,16 @@ class RAGPipeline:
 
     def ask(self, question: str, *, document_id: str | None = None, k: int = 4) -> dict:
         passages = self.retriever.search(question.strip(), k, document_id)
+
+        print("\n========== RAG DEBUG ==========")
+        print("QUESTION:", question)
+        print("DOCUMENT ID:", document_id)
+        print("RETRIEVED PASSAGES:", len(passages))
+
+        for i, passage in enumerate(passages, 1):
+            print(f"\n--- PASSAGE {i} ---")
+            print(passage["text"])
+
+        print("========== END DEBUG ==========\n")
+
         return generate_answer(question, passages)
