@@ -78,6 +78,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
+  // FILE PICKER AND DOCUMENT UPLOAD
   Future<void> _pickFile() async {
     try {
       final files = await FilePicker.pickFiles(
@@ -181,26 +182,37 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
         final answer = response['answer']?.toString() ?? '';
 
-        if (!mounted) return;
-
-        setState(() {
-          _chatService.currentSession!.messages.add(
-            ChatMessage(text: answer, isUser: false),
-          );
-
-          _isTyping = false;
-        });
+        // Save RAG AI response in backend database.
+        await _chatService.addMessage(
+          sessionId: currentSession.id,
+          content: answer,
+          role: 'assistant',
+        );
       } else {
         // EXISTING DUMMY AI RESPONSE
         await Future.delayed(const Duration(milliseconds: 800));
 
         if (!mounted) return;
 
-        setState(() {
-          _chatService.generateAIResponse(message);
-          _isTyping = false;
-        });
+        // Generate response without adding it locally.
+        final aiMessage = _chatService.generateAIResponse(
+          message,
+          addToSession: false,
+        );
+
+        // Save dummy AI response in backend database.
+        await _chatService.addMessage(
+          sessionId: currentSession.id,
+          content: aiMessage.text,
+          role: 'assistant',
+        );
       }
+
+      if (!mounted) return;
+
+      setState(() {
+        _isTyping = false;
+      });
 
       _scrollToBottom();
     } catch (e) {
@@ -421,13 +433,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 : _buildWelcomeView(isDark, r),
           ),
 
-        ChatInput(
+          ChatInput(
             controller: _messageController,
             onSend: () => _sendMessage(_messageController.text),
             onFileTap: _pickFile,
-
             attachmentName: selectedFile?.name,
-
             onRemoveAttachment: () {
               setState(() {
                 selectedFile = null;
@@ -564,5 +574,3 @@ class _BouncingDotState extends State<_BouncingDot>
     );
   }
 }
-
-

@@ -119,7 +119,7 @@ class ChatService {
     return Map<String, dynamic>.from(response.data);
   }
 
-  // ADD USER MESSAGE - BACKEND
+  // ADD MESSAGE - BACKEND
   Future<ChatMessage> addMessage({
     required String sessionId,
     required String content,
@@ -164,6 +164,8 @@ class ChatService {
       return ChatMessage.fromJson(Map<String, dynamic>.from(item));
     }).toList();
 
+    messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
     final index = _sessions.indexWhere((s) => s.id == sessionId);
 
     if (index != -1) {
@@ -181,7 +183,8 @@ class ChatService {
     return messages;
   }
 
-Future<Map<String, dynamic>> uploadDocument({
+  // UPLOAD DOCUMENT - RAG BACKEND
+  Future<Map<String, dynamic>> uploadDocument({
     required String filename,
     required Uint8List bytes,
   }) async {
@@ -189,6 +192,7 @@ Future<Map<String, dynamic>> uploadDocument({
       final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(bytes, filename: filename),
       });
+
       print("UPLOAD HEADERS: ${_apiService.dio.options.headers}");
 
       final response = await _apiService.dio.post(
@@ -232,21 +236,30 @@ Future<Map<String, dynamic>> uploadDocument({
       throw Exception('No active chat session');
     }
 
-    return await addMessage(sessionId: _currentSession!.id, content: text);
+    return await addMessage(
+      sessionId: _currentSession!.id,
+      content: text,
+      role: 'user',
+    );
   }
 
-  // DUMMY AI RESPONSE - UNCHANGED
-  ChatMessage generateAIResponse(String userMessage) {
+  // DUMMY AI RESPONSE
+  ChatMessage generateAIResponse(
+    String userMessage, {
+    bool addToSession = true,
+  }) {
     final response = _getSimulatedResponse(userMessage);
 
     final aiMessage = ChatMessage(text: response, isUser: false);
 
-    _currentSession!.messages.add(aiMessage);
+    if (addToSession && _currentSession != null) {
+      _currentSession!.messages.add(aiMessage);
+    }
 
     return aiMessage;
   }
 
-  // DUMMY RESPONSE GENERATOR - UNCHANGED
+  // DUMMY RESPONSE GENERATOR
   String _getSimulatedResponse(String message) {
     final lowerMessage = message.toLowerCase();
 
@@ -429,5 +442,6 @@ Future<Map<String, dynamic>> uploadDocument({
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 }
+
 
 
