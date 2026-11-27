@@ -2,7 +2,6 @@
 import os
 from io import BytesIO
 from pathlib import Path, PureWindowsPath
-
 import pytesseract
 from dotenv import load_dotenv
 from langchain_core.documents import Document

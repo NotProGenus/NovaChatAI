@@ -1,8 +1,5 @@
 from fastapi import FastAPI
 from database import Base, engine
-import models.user
-import models.chat_session
-import models.messages
 from fastapi.middleware.cors import CORSMiddleware
 from routers.general import router as general_router
 from routers.google_auth import router as google_router

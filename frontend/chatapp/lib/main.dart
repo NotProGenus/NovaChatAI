@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
 import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
 import 'utils/theme.dart';
@@ -39,7 +38,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
 
-    // Check saved login token
+    // Checking saved login token for the navigation
      tokenFuture = storage.read(key: 'access_token');
   }
 

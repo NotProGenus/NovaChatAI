@@ -45,7 +45,6 @@ class ChatInput extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Selected attachment preview
               if (attachmentName != null)
                 Padding(
                   padding: r.symmetricPadding(horizontal: 12, vertical: 8),
@@ -87,10 +86,10 @@ class ChatInput extends StatelessWidget {
                   ),
                 ),
 
-              // Input row
+              //Input row
+
               Row(
                 children: [
-                  // File attachment button
                   IconButton(
                     onPressed: onFileTap,
                     icon: Icon(
@@ -100,7 +99,6 @@ class ChatInput extends StatelessWidget {
                     ),
                   ),
 
-                  // Text field
                   Expanded(
                     child: TextField(
                       controller: controller,
@@ -129,7 +127,6 @@ class ChatInput extends StatelessWidget {
                     ),
                   ),
 
-                  // Send button
                   GestureDetector(
                     onTap: _handleSend,
                     child: Container(

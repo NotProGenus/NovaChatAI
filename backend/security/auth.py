@@ -1,14 +1,11 @@
 import os
-
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
 from database import get_db
 from models.user import User
-
 from sqlalchemy.orm import Session
 
 

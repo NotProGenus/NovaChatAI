@@ -1,17 +1,13 @@
-
 fastapi
 uvicorn[standard]
 sqlalchemy
 pymysql
 pydantic[email]
 python-dotenv
-
 python-jose[cryptography]
 passlib[bcrypt]
-
 python-multipart
 pypdf
-
 chromadb
 langchain
 langchain-core
@@ -21,3 +17,6 @@ langchain-chroma
 langchain-google-genai
 google-auth
 httpx
+pytesseract
+Pillow
+pdf2image

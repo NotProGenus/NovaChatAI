@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from models.user import User
 
-
 def create_normal_user(
     db: Session,
     name: str,
@@ -15,7 +14,6 @@ def create_normal_user(
         provider=provider,
         hashed_password=hashed_password
     )
-
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -32,7 +30,7 @@ def get_normal_user_by_email(
 
     user = query.filter(
         User.email == email,
-        User.provider == "normal"
+        User.provider == provider
     ).first()
 
     return user

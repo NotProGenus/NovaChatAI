@@ -1,7 +1,5 @@
-
 import os
 import httpx
-
 from dotenv import load_dotenv
 from fastapi import HTTPException
 from google.oauth2 import id_token
@@ -10,7 +8,6 @@ from google.auth.transport import requests
 load_dotenv()
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-
 
 def verify_google_token(token: str):
     try:

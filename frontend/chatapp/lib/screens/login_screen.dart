@@ -3,11 +3,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import 'package:chatapp/screens/signup_screen.dart';
 import 'package:chatapp/screens/home_screen.dart';
 import 'package:chatapp/main.dart';
-
 import '../utils/responsive.dart';
 import '../services/auth_service.dart';
 
@@ -152,26 +150,42 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
         barrierDismissible: false,
         builder: (dialogContext) {
           return AlertDialog(
-            title: const Text('GitHub Verification'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Open github and enter this code:'),
-                const SizedBox(height: 16),
-                SelectableText(
-                  userCode,
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 3,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Click continue after completing github authorization.',
-                ),
-              ],
+            title: const Text(
+              'GitHub Verification',
+              textAlign: TextAlign.center,
             ),
+            titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+            contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+            content: SizedBox(
+              width: 300,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Open GitHub and enter this code:',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 18),
+                  SelectableText(
+                    userCode,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 3,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Click Continue after completing GitHub authorization.',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actionsPadding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
             actions: [
               TextButton(
                 onPressed: () async {
@@ -254,14 +268,11 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
       throw Exception('Backend refresh token missing');
     }
 
-   // Save Access Token
+    // Save Access Token
     await storage.write(key: 'access_token', value: accessToken.toString());
 
     // Save Refresh Token
     await storage.write(key: 'refresh_token', value: refreshToken.toString());
-
-    print('ACCESS TOKEN SAVED: YES');
-    print('REFRESH TOKEN SAVED: YES');
 
     if (!mounted) return;
 
@@ -297,10 +308,10 @@ class _GetStartedScreenState extends State<GetstartedScreen> {
       controller: mycontroller,
       obscureText: myobscureText,
       keyboardType: keyboardType,
-      style: TextStyle(fontSize: myfontSize),
+      style: TextStyle(fontSize: myfontSize, color: Colors.black87),
       decoration: InputDecoration(
         hintText: myhint,
-        hintStyle: TextStyle(color: Colors.black, fontSize: myfontSize),
+        hintStyle: TextStyle(color: Colors.grey[600], fontSize: myfontSize),
         prefixIcon: Icon(
           myprefixIcon,
           color: Colors.grey[500],

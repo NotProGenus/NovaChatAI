@@ -1,4 +1,4 @@
-import 'package:chatapp/screens/getstarted_screen.dart';
+import 'package:chatapp/screens/login_screen.dart';
 import 'package:chatapp/screens/signup_screen.dart';
 import 'package:flutter/material.dart';
 import '../utils/responsive.dart';
@@ -62,16 +62,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           ),
                         ),
 
-                        SizedBox(height: r.h(10)),
-
-                        Text(
+                       Text(
                           "Your AI Assistant\nfor a Smarter Campus",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: subtitleSize,
                             fontWeight: FontWeight.w500,
+                            color: Colors.black54,
                           ),
-                        ),
+                        ), SizedBox(height: r.h(10)),
+
 
                         SizedBox(height: r.h(20)),
 
@@ -161,6 +161,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               style: TextStyle(
                                 fontSize: bottomTextSize,
                                 fontWeight: FontWeight.w500,
+                                color: Colors.grey[700],
                               ),
                             ),
                             Text(
@@ -168,6 +169,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               style: TextStyle(
                                 fontSize: bottomTextSize,
                                 fontWeight: FontWeight.w500,
+                                color: Colors.grey[700],
                               ),
                             ),
                             Text(
@@ -175,6 +177,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               style: TextStyle(
                                 fontSize: bottomTextSize,
                                 fontWeight: FontWeight.w500,
+                                color: Colors.grey[700],
                               ),
                             ),
                           ],

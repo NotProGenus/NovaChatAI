@@ -1,7 +1,5 @@
 import 'dart:async';
-
 import 'package:dio/dio.dart';
-
 import '../config/api_config.dart';
 import 'api_service.dart';
 
@@ -170,16 +168,14 @@ class AuthService {
       final response = await _apiService.dio.post('/auth/logout');
 
       result = Map<String, dynamic>.from(response.data);
-    } catch (e) {
-      print('SERVER LOGOUT FAILED: $e');
+    } 
+    catch (e) {
       result = {'message': 'Logged out locally'};
-    } finally {
+    } 
+    finally {
       await _apiService.storage.delete(key: 'access_token');
       await _apiService.storage.delete(key: 'refresh_token');
-
-      print('LOCAL TOKENS CLEARED');
     }
-
     return result;
   }
 }

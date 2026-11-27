@@ -1,6 +1,4 @@
-
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
-
 from security.auth import get_current_user
 from rag.pipeline import RAGPipeline
 from schemas.rag_schema import (
@@ -8,7 +6,6 @@ from schemas.rag_schema import (
     RAGQueryResponse,
     RAGUploadResponse
 )
-
 
 router = APIRouter(
     prefix="/rag",

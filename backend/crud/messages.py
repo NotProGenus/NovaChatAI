@@ -1,7 +1,5 @@
-
 from sqlalchemy.orm import Session
 from models.messages import Message
-
 
 def create_message(
     db              : Session,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-
 import '../models/chat_model.dart';
 import '../services/chat_service.dart';
 import '../utils/constants.dart';
@@ -40,10 +39,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   bool _isTyping = false;
   bool _isLoadingSessions = true;
 
-  // Selected file
+  // Select file
   PlatformFile? selectedFile;
 
-  // Uploaded document ID returned by the RAG backend
+  // Upload document ID returned by the RAG backend
   String? _documentId;
 
   List<ChatMessage> get _currentMessages =>
@@ -57,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _loadSessions();
   }
 
-  // LOAD CHAT HISTORY FROM BACKEND
+  // LOAD CHAT HISTORY
   Future<void> _loadSessions() async {
     try {
       await _chatService.getSessions();

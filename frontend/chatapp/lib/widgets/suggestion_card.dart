@@ -121,8 +121,6 @@ class SuggestionGrid extends StatelessWidget {
       },
     ];
 
-    // Calculate a responsive aspect ratio based on screen width
-    // Smaller screens need taller cards, larger screens can be wider
     final aspectRatio = r.isSmallPhone ? 1.0 : (r.isLargePhone ? 1.25 : 1.15);
 
     return Padding(

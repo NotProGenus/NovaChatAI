@@ -1,7 +1,6 @@
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 
-
 if __package__ == "rag":
     from vector_db.croma import open_collection
 else:

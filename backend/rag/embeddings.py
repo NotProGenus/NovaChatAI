@@ -1,7 +1,5 @@
 import os
-
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-
 
 def embedding_model_name() -> str:
     return os.getenv("RAG_EMBEDDING_MODEL", "gemini-embedding-001")

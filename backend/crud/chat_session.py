@@ -1,15 +1,12 @@
-
 from sqlalchemy.orm import Session
 from models.chat_session import ChatSession
 from models.messages import Message
-
 
 def create_chat_session(db: Session, user_id: int, title: str):
     new_session = ChatSession(
         user_id = user_id,
         title = title
     )
-
     db.add(new_session)
     db.commit()
     db.refresh(new_session)

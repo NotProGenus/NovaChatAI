@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 
 class MessageCreate(BaseModel):
-
     content : str = Field(..., min_length=1)
     role    : str = "user"
 
@@ -15,9 +14,8 @@ class MessageCreate(BaseModel):
 
      return value.strip()
 
-
 class MessageResponse(BaseModel):
-
+    
     id              : int
     chat_session_id : int
     role            : str

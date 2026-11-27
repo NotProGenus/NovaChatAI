@@ -3,11 +3,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import 'package:chatapp/screens/getstarted_screen.dart';
+import 'package:chatapp/screens/login_screen.dart';
 import 'package:chatapp/screens/home_screen.dart';
 import 'package:chatapp/main.dart';
-
 import '../utils/responsive.dart';
 import '../services/auth_service.dart';
 
@@ -284,9 +282,6 @@ final storage = const FlutterSecureStorage();
     value: refreshToken.toString(),
   );
 
-  print('ACCESS TOKEN SAVED: YES');
-  print('REFRESH TOKEN SAVED: YES');
-
   if (!mounted) return;
 
   Navigator.pushAndRemoveUntil(
@@ -321,10 +316,10 @@ final storage = const FlutterSecureStorage();
       controller: mycontroller,
       obscureText: myobscureText,
       keyboardType: keyboardType,
-      style: TextStyle(fontSize: myfontSize),
+      style: TextStyle(fontSize: myfontSize, color: Colors.black87),
       decoration: InputDecoration(
         hintText: myhint,
-        hintStyle: TextStyle(color: Colors.black, fontSize: myfontSize),
+        hintStyle: TextStyle(color: Colors.grey[600], fontSize: myfontSize),
         prefixIcon: Icon(
           myprefixIcon,
           color: Colors.grey[500],

@@ -1,11 +1,9 @@
 import json
 import os
-
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 
 NO_ANSWER = "I couldn't find an answer in your documents."
-
 
 def generate_answer(question: str, passages: list[dict]) -> dict:
     if not passages:

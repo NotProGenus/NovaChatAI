@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import '../config/api_config.dart';
 
 class ApiService {
@@ -12,6 +11,7 @@ class ApiService {
   Future<String?>? _refreshFuture;
 
   ApiService() {
+    //Setup Dio
     dio = Dio(
       BaseOptions(
         baseUrl: ApiConfig.baseUrl,
@@ -21,7 +21,7 @@ class ApiService {
       ),
     );
 
-    // Separate Dio for refresh API
+    // Refresh Dio
     _refreshDio = Dio(
       BaseOptions(
         baseUrl: ApiConfig.baseUrl,
@@ -36,15 +36,9 @@ class ApiService {
         onRequest: (options, handler) async {
           final token = await storage.read(key: 'access_token');
 
-          print("TOKEN EXISTS: ${token != null && token.isNotEmpty}");
-
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
-            print("AUTH HEADER ATTACHED: YES");
-          } else {
-            print("AUTH HEADER ATTACHED: NO");
           }
-
           handler.next(options);
         },
 
@@ -83,7 +77,6 @@ class ApiService {
 
             return handler.resolve(response);
           } catch (e) {
-            print("REQUEST RETRY FAILED: $e");
             return handler.next(error);
           }
         },
@@ -123,7 +116,7 @@ class ApiService {
       final newAccessToken = response.data['access_token_jwt'];
 
       if (newAccessToken == null || newAccessToken.toString().isEmpty) {
-        throw Exception('New access token missing');
+        throw Exception('New access token is missing');
       }
 
       await storage.write(
@@ -131,11 +124,8 @@ class ApiService {
         value: newAccessToken.toString(),
       );
 
-      print("ACCESS TOKEN REFRESHED: YES");
-
       return newAccessToken.toString();
     } catch (e) {
-      print("TOKEN REFRESH FAILED: $e");
 
       await storage.delete(key: 'access_token');
       await storage.delete(key: 'refresh_token');

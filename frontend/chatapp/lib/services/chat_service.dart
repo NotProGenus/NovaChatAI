@@ -1,8 +1,6 @@
 import 'dart:math';
 import 'dart:typed_data';
-
 import 'package:dio/dio.dart';
-
 import '../models/chat_model.dart';
 import 'api_service.dart';
 
@@ -15,7 +13,7 @@ class ChatService {
   List<ChatSession> get sessions => List.unmodifiable(_sessions);
   ChatSession? get currentSession => _currentSession;
 
-  // CREATE SESSION - BACKEND
+  // CREATE SESSION
   Future<ChatSession> createSession({required String title}) async {
     final response = await _apiService.dio.post(
       '/chat/sessions/create_session',
@@ -32,7 +30,7 @@ class ChatService {
     return session;
   }
 
-  // GET ALL SESSIONS - BACKEND
+  // GET ALL SESSIONS
   Future<List<ChatSession>> getSessions({int page = 1, int limit = 10}) async {
     final response = await _apiService.dio.get(
       '/chat/sessions/get_sessions',
@@ -52,7 +50,7 @@ class ChatService {
     return sessions;
   }
 
-  // GET SINGLE SESSION - BACKEND
+  // GET SINGLE SESSION
   Future<ChatSession> getSession({required String sessionId}) async {
     final response = await _apiService.dio.get(
       '/chat/sessions/$sessionId/get_session',
@@ -75,7 +73,7 @@ class ChatService {
     return session;
   }
 
-  // UPDATE SESSION TITLE - BACKEND
+  // UPDATE SESSION TITLE
   Future<ChatSession> updateSession({
     required String sessionId,
     required String title,
@@ -102,7 +100,7 @@ class ChatService {
     return updatedSession;
   }
 
-  // DELETE SESSION - BACKEND
+  // DELETE SESSION
   Future<Map<String, dynamic>> deleteChatSession({
     required String sessionId,
   }) async {
@@ -119,7 +117,7 @@ class ChatService {
     return Map<String, dynamic>.from(response.data);
   }
 
-  // ADD MESSAGE - BACKEND
+  // ADD MESSAGE
   Future<ChatMessage> addMessage({
     required String sessionId,
     required String content,
@@ -147,7 +145,7 @@ class ChatService {
     return message;
   }
 
-  // GET MESSAGES - BACKEND
+  // GET MESSAGES
   Future<List<ChatMessage>> getMessages({
     required String sessionId,
     int page = 1,
@@ -183,34 +181,25 @@ class ChatService {
     return messages;
   }
 
-  // UPLOAD DOCUMENT - RAG BACKEND
+  // UPLOAD DOCUMENT
   Future<Map<String, dynamic>> uploadDocument({
     required String filename,
     required Uint8List bytes,
   }) async {
-    try {
-      final formData = FormData.fromMap({
-        'file': MultipartFile.fromBytes(bytes, filename: filename),
-      });
+    final formData = FormData.fromMap({
+      'file': MultipartFile.fromBytes(bytes, filename: filename),
+    });
 
-      print("UPLOAD HEADERS: ${_apiService.dio.options.headers}");
+    final response = await _apiService.dio.post(
+      '/rag/upload',
+      data: formData,
+      options: Options(contentType: 'multipart/form-data'),
+    );
 
-      final response = await _apiService.dio.post(
-        '/rag/upload',
-        data: formData,
-        options: Options(contentType: 'multipart/form-data'),
-      );
-
-      return Map<String, dynamic>.from(response.data);
-    } on DioException catch (e) {
-      print('UPLOAD STATUS: ${e.response?.statusCode}');
-      print('UPLOAD ERROR DETAIL: ${e.response?.data}');
-      print('UPLOAD REQUEST URL: ${e.requestOptions.uri}');
-      rethrow;
-    }
+    return Map<String, dynamic>.from(response.data);
   }
 
-  // ASK DOCUMENT - RAG BACKEND
+  // ASK DOCUMENT
   Future<Map<String, dynamic>> askDocument({
     required String question,
     String? documentId,
@@ -224,13 +213,13 @@ class ChatService {
     return Map<String, dynamic>.from(response.data);
   }
 
-  // SWITCH SESSION - BACKEND
+  // SWITCH SESSION
   Future<void> switchToSession(String sessionId) async {
     await getSession(sessionId: sessionId);
     await getMessages(sessionId: sessionId);
   }
 
-  // SEND USER MESSAGE - BACKEND
+  // SEND USER MESSAGE
   Future<ChatMessage> sendMessage(String text) async {
     if (_currentSession == null) {
       throw Exception('No active chat session');

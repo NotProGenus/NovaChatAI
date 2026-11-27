@@ -1,7 +1,6 @@
 from hashlib import sha256
 import chromadb
 
-
 def open_collection(directory: str, user_id: int, model_name: str):
 
     if type(user_id) is not int or user_id < 1:
